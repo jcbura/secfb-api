@@ -1,0 +1,218 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Team {
+  id               Int        @id @default(autoincrement())
+  slug             String     @unique // alabama-crimson-tide
+  displayName      String     @unique @map("display_name") // Alabama Crimson Tide
+  shortDisplayName String     @unique @map("short_display_name") // Alabama
+  abbreviation     String     @unique // ALA
+  mascot           String // Crimson Tide
+  conference       Conference @default(SEC)
+
+  // Relationships
+  logo                Logo?
+  stadium             Stadium?             @relation(fields: [stadiumId], references: [id])
+  stadiumId           Int?                 @map("stadium_id")
+  gameParticipants    GameParticipant[]
+  teamSeasonSnapshots TeamSeasonSnapshot[]
+
+  // Metadata
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("teams")
+}
+
+model Logo {
+  id      Int    @id @default(autoincrement())
+  url     String @unique
+  darkUrl String @unique @map("dark_url")
+  width   Int    @default(500)
+  height  Int    @default(500)
+  alt     String
+
+  // Relationships
+  team   Team @relation(fields: [teamId], references: [id])
+  teamId Int  @unique @map("team_id")
+
+  // Metadata
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("logos")
+}
+
+model TeamSeasonSnapshot {
+  id                          Int      @id @default(autoincrement())
+  wins                        Int?
+  losses                      Int?
+  conferenceWins              Int?     @map("conference_wins")
+  conferenceLosses            Int?     @map("conference_losses")
+  homeWins                    Int?     @map("home_wins")
+  homeLosses                  Int?     @map("home_losses")
+  awayWins                    Int?     @map("away_wins")
+  awayLosses                  Int?     @map("away_losses")
+  neutralWins                 Int?     @map("neutral_wins")
+  neutralLosses               Int?     @map("neutral_losses")
+  streak                      Int?
+  isWinStreak                 Boolean? @map("is_win_streak")
+  conferenceRank              Int?     @map("conference_rank")
+  totalDefense                Int?     @map("total_defense")
+  totalOffense                Int?     @map("total_offense")
+  apPoll                      Int?     @map("ap_poll")
+  coachesPoll                 Int?     @map("coaches_poll")
+  cfpRank                     Int?     @map("cfp_rank")
+  footballPowerIndex          Int?     @map("football_power_index")
+  strengthOfRecord            Int?     @map("strength_of_record")
+  strengthOfSchedule          Int?     @map("strength_of_schedule")
+  remainingStrengthOfSchedule Int?     @map("remaining_strength_of_schedule")
+
+  // Relationships
+  team     Team   @relation(fields: [teamId], references: [id])
+  teamId   Int    @map("team_id")
+  season   Season @relation(fields: [seasonId], references: [id])
+  seasonId Int    @map("season_id")
+
+  // Metadata
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@unique([teamId, seasonId])
+  @@map("team_season_snapshots")
+}
+
+model Stadium {
+  id       Int     @id @default(autoincrement())
+  slug     String  @unique // bryant-denny-stadium-tuscaloosa or kyle-field-college-station
+  name     String // Bryant-Denny Stadium or Kyle Field
+  nickname String? // Death Valley or The Swamp
+  field    String? // Saban Field or null
+  city     String // Tuscaloosa
+  state    String // AL
+  capacity Int? // 101821
+
+  // Relationships
+  teams Team[]
+  games Game[]
+
+  // Metadata
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@unique([name, city, state])
+  @@map("stadiums")
+}
+
+model Season {
+  id              Int      @id @default(autoincrement())
+  slug            String   @unique // 2025-2026
+  name            String   @unique // 2025-2026
+  startDate       DateTime @map("start_date") // 2025
+  endDate         DateTime @map("end_date") // 2026
+  isCurrentSeason Boolean  @default(false) @map("is_current_season")
+
+  // Relationships
+  games               Game[]
+  teamSeasonSnapshots TeamSeasonSnapshot[]
+
+  // Metadata
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@unique([startDate, endDate])
+  @@map("seasons")
+}
+
+model Game {
+  id               Int        @id @default(autoincrement())
+  slug             String     @unique // 2025-11-29-ala-aub 
+  name             String? // Iron Bowl
+  date             DateTime
+  isTimeTBD        Boolean    @default(false) @map("is_time_tbd")
+  weekNumber       Int?       @map("week_number") // Week 0
+  attendance       Int?
+  gameType         GameType   @map("game_type")
+  isConferenceGame Boolean    @map("is_conference_game")
+  isNeutralSite    Boolean    @default(false) @map("is_neutral_site")
+  status           GameStatus @default(SCHEDULED)
+  endedInOvertime  Boolean    @map("ended_in_overtime")
+  overtimes        Int?
+
+  // Relationships
+  season           Season            @relation(fields: [seasonId], references: [id])
+  seasonId         Int               @map("season_id")
+  stadium          Stadium           @relation(fields: [stadiumId], references: [id])
+  stadiumId        Int               @map("stadium_id")
+  gameParticipants GameParticipant[]
+
+  // Metadata
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@unique([seasonId, date, stadiumId])
+  @@map("games")
+}
+
+model GameParticipant {
+  id         Int      @id @default(autoincrement())
+  isHomeTeam Boolean  @map("is_home_team")
+  score      Int?
+  isWinner   Boolean? @map("is_winner")
+
+  // Relationships
+  game   Game @relation(fields: [gameId], references: [id])
+  gameId Int  @map("game_id")
+  team   Team @relation(fields: [teamId], references: [id])
+  teamId Int  @map("team_id")
+
+  // Metadata
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@unique([gameId, teamId])
+  @@map("game_participants")
+}
+
+enum Conference {
+  AMERICAN
+  ACC
+  BIG_12
+  BIG_TEN
+  CONFERENCE_USA
+  FBS_INDEPENDENT
+  MID_AMERICAN
+  MOUNTAIN_WEST
+  PAC_12
+  SEC
+  SUN_BELT
+}
+
+enum GameType {
+  REGULAR_SEASON
+  CONFERENCE_CHAMPIONSHIP
+  BOWL
+  PLAYOFF_FIRST_ROUND
+  QUARTERFINAL
+  SEMIFINAL
+  NATIONAL_CHAMPIONSHIP
+}
+
+enum GameStatus {
+  SCHEDULED
+  IN_PROGRESS
+  FINAL
+}
