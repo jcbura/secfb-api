@@ -142,7 +142,7 @@ npm run format             # Format code with Prettier
 
 ```
 src/
-├── common/                 # Shared utilities and configurations
+├── common/                # Shared utilities and configurations
 │   ├── dtos/              # Data Transfer Objects
 │   ├── filters/           # Exception filters
 │   ├── interceptors/      # Response interceptors
@@ -161,9 +161,9 @@ src/
 
 ## Roadmap
 
-- [ ] Authentication module (JWT-based auth)
-- [ ] Complete teams module (additional team data, season stats)
-- [ ] Complete games module (live scores, game details)
+- [ ] Authentication module
+- [ ] Complete teams module
+- [ ] Complete games module
 
 ---
 
