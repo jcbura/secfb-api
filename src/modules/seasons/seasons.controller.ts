@@ -1,3 +1,4 @@
+import { Auth } from '@/common/decorators';
 import { withBaseArrayResponse, withBaseResponse } from '@/common/utils';
 import {
   CreateSeasonRequestDto,
@@ -37,6 +38,7 @@ export class SeasonsController {
       SeasonResponseDto,
     ) {},
   })
+  @Auth()
   @Post()
   async create(
     @Body() createSeasonRequestDto: CreateSeasonRequestDto,
@@ -97,6 +99,7 @@ export class SeasonsController {
       SeasonResponseDto,
     ) {},
   })
+  @Auth()
   @Patch(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -114,6 +117,7 @@ export class SeasonsController {
       SeasonResponseDto,
     ) {},
   })
+  @Auth()
   @Delete(':id')
   async softDelete(
     @Param('id', ParseIntPipe) id: number,
@@ -130,6 +134,7 @@ export class SeasonsController {
       SeasonResponseDto,
     ) {},
   })
+  @Auth()
   @Patch(':id/restore')
   async restore(
     @Param('id', ParseIntPipe) id: number,
@@ -149,6 +154,7 @@ export class SeasonsController {
       SeasonResponseDto,
     ) {},
   })
+  @Auth()
   @Delete(':id/hard')
   async hardDelete(
     @Param('id', ParseIntPipe) id: number,
