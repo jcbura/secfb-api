@@ -112,6 +112,12 @@ ADMIN_PASSWORD_HASH="hash"
 openssl rand -hex 32
 ```
 
+**Important:** Generate admin password hash:
+
+```bash
+node -e "console.log(require('bcrypt').hashSync('password', 10))"
+```
+
 ### 5. Database Setup
 
 Generate Prisma client and run migrations:
