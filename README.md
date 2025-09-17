@@ -185,9 +185,9 @@ src/
 
 ## Roadmap
 
-- [x] Authentication module (JWT-based auth)
-- [ ] Complete teams module (additional team data, season stats)
-- [ ] Complete games module (live scores, game details)
+- [x] Authentication module
+- [ ] Complete teams module
+- [ ] Complete games module
 
 ---
 
