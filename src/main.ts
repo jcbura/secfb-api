@@ -9,11 +9,14 @@ import { environmentVariables } from '@/config';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.setGlobalPrefix(environmentVariables.API_PREFIX);
+
+  app.use(cookieParser(environmentVariables.COOKIE_SECRET));
 
   app.enableCors({
     credentials: true,
@@ -41,6 +44,7 @@ async function bootstrap() {
     .setTitle('SECFB API')
     .setDescription('SECFB API Documentation')
     .setVersion('0.0.1')
+    .addBearerAuth()
     .build();
 
   const documentFactory = () =>

@@ -1,3 +1,4 @@
+import { Auth } from '@/common/decorators';
 import { withBaseArrayResponse, withBaseResponse } from '@/common/utils';
 import {
   CreateStadiumRequestDto,
@@ -37,6 +38,7 @@ export class StadiumsController {
       StadiumResponseDto,
     ) {},
   })
+  @Auth()
   @Post()
   async create(
     @Body() createStadiumRequestDto: CreateStadiumRequestDto,
@@ -98,6 +100,7 @@ export class StadiumsController {
       StadiumResponseDto,
     ) {},
   })
+  @Auth()
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -115,6 +118,7 @@ export class StadiumsController {
       StadiumResponseDto,
     ) {},
   })
+  @Auth()
   @Delete(':id')
   softDelete(
     @Param('id', ParseIntPipe) id: number,
@@ -131,6 +135,7 @@ export class StadiumsController {
       StadiumResponseDto,
     ) {},
   })
+  @Auth()
   @Patch(':id/restore')
   restore(@Param('id', ParseIntPipe) id: number): Promise<StadiumResponseDto> {
     return this.stadiumsService.restore(id);
@@ -145,6 +150,7 @@ export class StadiumsController {
       StadiumResponseDto,
     ) {},
   })
+  @Auth()
   @Delete(':id/hard')
   hardDelete(
     @Param('id', ParseIntPipe) id: number,

@@ -1,3 +1,4 @@
+import { AuthModule } from '@/modules/auth/auth.module';
 import { GamesModule } from '@/modules/games/games.module';
 import { PrismaModule } from '@/modules/prisma/prisma.module';
 import { SeasonsModule } from '@/modules/seasons/seasons.module';
@@ -32,6 +33,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
     GamesModule,
     SeasonsModule,
     StadiumsModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [],

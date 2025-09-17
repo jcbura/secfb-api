@@ -16,6 +16,7 @@ The SECFB API provides a backend service for managing college football data incl
 - **Seasons Management**: Multi-year season tracking with current season indicators
 - **Stadiums Management**: Stadium information including capacity, location, and team associations
 - **Games Management**: Game scheduling, results, and participant tracking
+- **Admin Authentication**: JWT-based authentication with refresh token support
 
 ### Technical Features
 
@@ -26,6 +27,7 @@ The SECFB API provides a backend service for managing college football data incl
 - **Soft Deletes**: Safe data deletion with restore capabilities
 - **CORS Support**: Cross-origin resource sharing
 - **Structured Responses**: Consistent API response format
+- **Security**: Bcrypt password hashing, signed cookies, JWT tokens
 
 ## Tech Stack
 
@@ -33,6 +35,7 @@ The SECFB API provides a backend service for managing college football data incl
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 - **Database**: [PostgreSQL](https://www.postgresql.org/)
 - **ORM**: [Prisma](https://www.prisma.io/)
+- **Authentication**: [Passport.js](https://www.passportjs.org/) with JWT
 - **Documentation**: [Swagger/OpenAPI](https://swagger.io/)
 - **Validation**: [class-validator](https://github.com/typestack/class-validator)
 - **Code Quality**: ESLint, Prettier, Husky, Commitlint
@@ -78,16 +81,35 @@ cp .env.example .env
 Configure the following environment variables:
 
 ```env
-# Database
-DATABASE_URL="postgresql://username:password@localhost:5432/secfb_db"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/secfb_db"
 
-# Server Configuration
-PORT=3000
-ADDRESS=0.0.0.0
-NODE_ENV=development
+NODE_ENV="development"
+PORT="3000"
+ADDRESS="0.0.0.0"
 
-# CORS Configuration
-CORS_ORIGIN_REGEXP="^http://localhost:\\d+$"
+CORS_ORIGIN_REGEXP="^http://localhost:\d+$"
+
+COOKIE_SECRET="secret"
+COOKIE_NAME="SECFB_REFRESH_TOKEN"
+COOKIE_PATH="/"
+COOKIE_DOMAIN="localhost"
+COOKIE_LIFETIME="604800"
+
+JWT_SECRET="secret"
+JWT_EXPIRES_IN="15m"
+JWT_REFRESH_SECRET="secret"
+JWT_REFRESH_EXPIRES_IN="7d"
+
+SALT_ROUNDS="10"
+
+ADMIN_USERNAME="admin"
+ADMIN_PASSWORD_HASH="hash"
+```
+
+**Important:** Generate secure secrets for production:
+
+```bash
+openssl rand -hex 32
 ```
 
 ### 5. Database Setup
@@ -142,13 +164,15 @@ npm run format             # Format code with Prettier
 
 ```
 src/
-├── common/                 # Shared utilities and configurations
+├── common/                # Shared utilities and configurations
+│   ├── decorators/        # Decorators
 │   ├── dtos/              # Data Transfer Objects
 │   ├── filters/           # Exception filters
 │   ├── interceptors/      # Response interceptors
 │   ├── prisma/            # Database schema and migrations
 │   └── utils/             # Utility functions
 ├── modules/               # Feature modules
+│   ├── auth/              # Auth management
 │   ├── games/             # Games management
 │   ├── prisma/            # Database service
 │   ├── seasons/           # Seasons management
@@ -161,7 +185,7 @@ src/
 
 ## Roadmap
 
-- [ ] Authentication module (JWT-based auth)
+- [x] Authentication module (JWT-based auth)
 - [ ] Complete teams module (additional team data, season stats)
 - [ ] Complete games module (live scores, game details)
 
