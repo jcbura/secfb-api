@@ -17,7 +17,8 @@
     "db:reset": "prisma migrate reset --schema src/common/prisma/schema.prisma",
     "db:studio": "prisma studio --schema src/common/prisma/schema.prisma",
     "lint": "eslint \"{src,apps,libs}/**/*.ts\" --fix",
-    "prepare": "husky"
+    "prepare": "husky",
+    "commitlint": "commitlint --edit"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -78,6 +79,12 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
+  },
+  "lint-staged": {
+    "**/*.{js,jsx,ts,tsx}": [
+      "npx prettier --write",
+      "npx eslint --fix"
+    ]
   },
   "jest": {
     "moduleFileExtensions": [
