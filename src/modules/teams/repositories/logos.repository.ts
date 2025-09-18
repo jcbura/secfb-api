@@ -1,5 +1,6 @@
 import { PrismaService } from '@/modules/prisma/prisma.service';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Logo, Prisma } from '@prisma/client';
 
 @Injectable()
 export class LogosRepository {
@@ -7,21 +8,170 @@ export class LogosRepository {
 
   constructor(private readonly prismaService: PrismaService) {}
 
+  private async validateTeamExists(teamId: number): Promise<void> {
+    const teamExists = await this.prismaService.team.findUnique({
+      where: { id: teamId, deletedAt: null },
+    });
+    if (!teamExists) {
+      this.logger.warn(`Team lookup failed: ID ${teamId} not found`);
+      throw new NotFoundException(`Team with ID ${teamId} not found`);
+    }
+  }
+
   // ==========================================
   // CORE CRUD OPERATIONS
   // ==========================================
 
-  create() {} // create(teamId, data)
+  async create(
+    teamId: number,
+    data: Prisma.LogoCreateWithoutTeamInput,
+  ): Promise<Logo> {
+    try {
+      await this.validateTeamExists(teamId);
 
-  findByTeam() {} // findByTeam(teamId) - validation for updating
+      const logo = await this.prismaService.logo.create({
+        data: {
+          ...data,
+          team: { connect: { id: teamId } },
+        },
+      });
 
-  findByTeamOrThrow() {} // findByTeamOrThrow(teamId) - validation for updating
+      this.logger.log(`Logo created: ${logo.id}`);
+      return logo;
+    } catch (error) {
+      this.logger.error('Database error creating logo', error.stack);
+      throw error;
+    }
+  }
 
-  update() {} // update(teamId, data)
+  async findByTeam(teamId: number): Promise<Logo | null> {
+    try {
+      await this.validateTeamExists(teamId);
 
-  softDelete() {} // softDelete(teamId)
+      const logo = await this.prismaService.logo.findUnique({
+        where: { teamId, deletedAt: null },
+      });
 
-  restore() {} // restore(teamId)
+      return logo;
+    } catch (error) {
+      this.logger.error(
+        `Database error fetching logo by team ID ${teamId}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
 
-  hardDelete() {} // harDelete(teamId)
+  async findByTeamOrThrow(teamId: number): Promise<Logo> {
+    const logo = await this.findByTeam(teamId);
+    if (!logo) {
+      this.logger.warn(
+        `Logo lookup failed: logo for team ID ${teamId} not found`,
+      );
+      throw new NotFoundException(`Logo for team ID ${teamId} not found`);
+    }
+    return logo;
+  }
+
+  async update(
+    teamId: number,
+    data: Prisma.LogoUpdateWithoutTeamInput,
+  ): Promise<Logo> {
+    try {
+      await this.findByTeamOrThrow(teamId);
+
+      const logo = await this.prismaService.logo.update({
+        where: { teamId },
+        data,
+      });
+
+      this.logger.log(`Logo updated: ${logo.id}`);
+      return logo;
+    } catch (error) {
+      this.logger.error(
+        `Database error updating logo for team ID ${teamId}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async softDelete(teamId: number): Promise<Logo> {
+    try {
+      await this.findByTeamOrThrow(teamId);
+
+      const logo = await this.prismaService.logo.update({
+        where: { teamId },
+        data: { deletedAt: new Date() },
+      });
+
+      this.logger.log(`Logo soft deleted: ${logo.id}`);
+      return logo;
+    } catch (error) {
+      this.logger.error(
+        `Database error soft deleting logo for team ID ${teamId}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async restore(teamId: number): Promise<Logo> {
+    try {
+      await this.validateTeamExists(teamId);
+
+      const logo = await this.prismaService.logo.findUnique({
+        where: { teamId },
+      });
+      if (!logo) {
+        this.logger.warn(
+          `Restore failed: logo for team ID ${teamId} not found`,
+        );
+        throw new NotFoundException(`Logo for team ID ${teamId} not found`);
+      }
+
+      const restoredLogo = await this.prismaService.logo.update({
+        where: { teamId },
+        data: { deletedAt: null },
+      });
+
+      this.logger.log(`Logo restored: ${restoredLogo.id}`);
+      return restoredLogo;
+    } catch (error) {
+      this.logger.error(
+        `Database error restoring logo for team ID ${teamId}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async hardDelete(teamId: number): Promise<Logo> {
+    try {
+      await this.validateTeamExists(teamId);
+
+      const logo = await this.prismaService.logo.findUnique({
+        where: { teamId },
+      });
+      if (!logo) {
+        this.logger.warn(
+          `Hard delete failed: logo for team ID ${teamId} not found`,
+        );
+        throw new NotFoundException(`Logo for team ID ${teamId} not found`);
+      }
+
+      const deletedLogo = await this.prismaService.logo.delete({
+        where: { teamId },
+      });
+
+      this.logger.log(`Logo permanently deleted: ${deletedLogo.id}`);
+      return deletedLogo;
+    } catch (error) {
+      this.logger.error(
+        `Database error hard deleting logo for team ID ${teamId}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
 }
