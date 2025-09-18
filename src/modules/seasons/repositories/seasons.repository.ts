@@ -8,9 +8,21 @@ export class SeasonsRepository {
 
   constructor(private readonly prismaService: PrismaService) {}
 
-  // ===========================
-  // BASIC CRUD OPERATIONS
-  // ===========================
+  // ==========================================
+  // CORE CRUD OPERATIONS
+  // ==========================================
+
+  async create(data: Prisma.SeasonCreateInput): Promise<Season> {
+    try {
+      const season = await this.prismaService.season.create({ data });
+
+      this.logger.log(`Season created: ${season.id}`);
+      return season;
+    } catch (error) {
+      this.logger.error('Database error creating season', error.stack);
+      throw error;
+    }
+  }
 
   async findAll(): Promise<Season[]> {
     try {
@@ -42,6 +54,15 @@ export class SeasonsRepository {
     }
   }
 
+  async findByIdOrThrow(id: number): Promise<Season> {
+    const season = await this.findById(id);
+    if (!season) {
+      this.logger.warn(`Season lookup failed: ID ${id} not found`);
+      throw new NotFoundException(`Season with ID ${id} not found`);
+    }
+    return season;
+  }
+
   async findBySlug(slug: string): Promise<Season | null> {
     try {
       const season = await this.prismaService.season.findUnique({
@@ -58,15 +79,6 @@ export class SeasonsRepository {
     }
   }
 
-  async findByIdOrThrow(id: number): Promise<Season> {
-    const season = await this.findById(id);
-    if (!season) {
-      this.logger.warn(`Season lookup failed: ID ${id} not found`);
-      throw new NotFoundException(`Season with ID ${id} not found`);
-    }
-    return season;
-  }
-
   async findBySlugOrThrow(slug: string): Promise<Season> {
     const season = await this.findBySlug(slug);
     if (!season) {
@@ -76,16 +88,25 @@ export class SeasonsRepository {
     return season;
   }
 
-  async create(data: Prisma.SeasonCreateInput): Promise<Season> {
-    try {
-      const season = await this.prismaService.season.create({ data });
-
-      this.logger.log(`Season created: ${season.id}`);
-      return season;
-    } catch (error) {
-      this.logger.error('Database error creating season', error.stack);
-      throw error;
+  async findByIdentifier(identifier: string): Promise<Season | null> {
+    const numericId = parseInt(identifier, 10);
+    if (!isNaN(numericId) && numericId.toString() === identifier) {
+      return this.findById(numericId);
     }
+    return this.findBySlug(identifier);
+  }
+
+  async findByIdentifierOrThrow(identifier: string): Promise<Season> {
+    const season = await this.findByIdentifier(identifier);
+    if (!season) {
+      this.logger.warn(
+        `Season lookup failed: identifier ${identifier} not found`,
+      );
+      throw new NotFoundException(
+        `Season with identifier ${identifier} not found`,
+      );
+    }
+    return season;
   }
 
   async update(id: number, data: Prisma.SeasonUpdateInput): Promise<Season> {
@@ -173,11 +194,9 @@ export class SeasonsRepository {
     }
   }
 
-  // ===========================
-  // RELATIONSHIP QUERIES
-  // ===========================
+  // ==========================================
+  // QUERY OPERATIONS
+  // ==========================================
 
-  // ===========================
-  // FRONTEND-SPECIFIC QUERIES
-  // ===========================
+  findCurrent() {} // findCurrent()
 }

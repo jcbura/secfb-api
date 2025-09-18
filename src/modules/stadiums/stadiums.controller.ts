@@ -82,12 +82,7 @@ export class StadiumsController {
   async findByIdentifier(
     @Param('identifier') identifier: string,
   ): Promise<StadiumResponseDto> {
-    const numericId = parseInt(identifier, 10);
-    if (!isNaN(numericId) && numericId.toString() === identifier) {
-      return this.stadiumsService.findById(numericId);
-    }
-
-    return this.stadiumsService.findBySlug(identifier);
+    return this.stadiumsService.findByIdentifier(identifier);
   }
 
   @ApiOperation({ summary: 'Update stadium by ID' })

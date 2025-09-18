@@ -1,6 +1,6 @@
 import { PrismaModule } from '@/modules/prisma/prisma.module';
+import { StadiumsRepository } from '@/modules/stadiums/repositories';
 import { StadiumsController } from '@/modules/stadiums/stadiums.controller';
-import { StadiumsRepository } from '@/modules/stadiums/stadiums.repository';
 import { StadiumsService } from '@/modules/stadiums/stadiums.service';
 import { Module } from '@nestjs/common';
 
@@ -8,5 +8,6 @@ import { Module } from '@nestjs/common';
   imports: [PrismaModule],
   controllers: [StadiumsController],
   providers: [StadiumsRepository, StadiumsService],
+  exports: [StadiumsRepository],
 })
 export class StadiumsModule {}

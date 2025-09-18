@@ -79,12 +79,7 @@ export class SeasonsController {
   async findByIdentifier(
     @Param('identifier') identifier: string,
   ): Promise<SeasonResponseDto> {
-    const numericId = parseInt(identifier, 10);
-    if (!isNaN(numericId) && numericId.toString() === identifier) {
-      return this.seasonsService.findById(numericId);
-    }
-
-    return this.seasonsService.findBySlug(identifier);
+    return this.seasonsService.findByIdentifier(identifier);
   }
 
   @ApiOperation({

@@ -8,9 +8,21 @@ export class TeamsRepository {
 
   constructor(private readonly prismaService: PrismaService) {}
 
-  // ===========================
-  // BASIC CRUD OPERATIONS
-  // ===========================
+  // ==========================================
+  // CORE CRUD OPERATIONS
+  // ==========================================
+
+  async create(data: Prisma.TeamCreateInput): Promise<Team> {
+    try {
+      const team = await this.prismaService.team.create({ data });
+
+      this.logger.log(`Team created: ${team.id}`);
+      return team;
+    } catch (error) {
+      this.logger.error('Database error creating team', error.stack);
+      throw error;
+    }
+  }
 
   async findAll(): Promise<Team[]> {
     try {
@@ -42,6 +54,15 @@ export class TeamsRepository {
     }
   }
 
+  async findByIdOrThrow(id: number): Promise<Team> {
+    const team = await this.findById(id);
+    if (!team) {
+      this.logger.warn(`Team lookup failed: ID ${id} not found`);
+      throw new NotFoundException(`Team with ID ${id} not found`);
+    }
+    return team;
+  }
+
   async findBySlug(slug: string): Promise<Team | null> {
     try {
       const team = await this.prismaService.team.findUnique({
@@ -58,15 +79,6 @@ export class TeamsRepository {
     }
   }
 
-  async findByIdOrThrow(id: number): Promise<Team> {
-    const team = await this.findById(id);
-    if (!team) {
-      this.logger.warn(`Team lookup failed: ID ${id} not found`);
-      throw new NotFoundException(`Team with ID ${id} not found`);
-    }
-    return team;
-  }
-
   async findBySlugOrThrow(slug: string): Promise<Team> {
     const team = await this.findBySlug(slug);
     if (!team) {
@@ -76,16 +88,25 @@ export class TeamsRepository {
     return team;
   }
 
-  async create(data: Prisma.TeamCreateInput): Promise<Team> {
-    try {
-      const team = await this.prismaService.team.create({ data });
-
-      this.logger.log(`Team created: ${team.id}`);
-      return team;
-    } catch (error) {
-      this.logger.error('Database error creating team', error.stack);
-      throw error;
+  async findByIdentifier(identifier: string): Promise<Team | null> {
+    const numericId = parseInt(identifier, 10);
+    if (!isNaN(numericId) && numericId.toString() === identifier) {
+      return this.findById(numericId);
     }
+    return this.findBySlug(identifier);
+  }
+
+  async findByIdentifierOrThrow(identifier: string): Promise<Team> {
+    const team = await this.findByIdentifier(identifier);
+    if (!team) {
+      this.logger.warn(
+        `Team lookup failed: identifier ${identifier} not found`,
+      );
+      throw new NotFoundException(
+        `Team with identifier ${identifier} not found`,
+      );
+    }
+    return team;
   }
 
   async update(id: number, data: Prisma.TeamUpdateInput): Promise<Team> {
@@ -163,11 +184,11 @@ export class TeamsRepository {
     }
   }
 
-  // ===========================
-  // RELATIONSHIP QUERIES
-  // ===========================
+  // ==========================================
+  // QUERY OPERATIONS
+  // ==========================================
 
-  // ===========================
-  // FRONTEND-SPECIFIC QUERIES
-  // ===========================
+  // ==========================================
+  // FRONTEND-DRIVEN OPERATIONS
+  // ==========================================
 }

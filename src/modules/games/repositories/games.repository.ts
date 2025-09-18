@@ -8,9 +8,21 @@ export class GamesRepository {
 
   constructor(private readonly prismaService: PrismaService) {}
 
-  // ===========================
-  // BASIC CRUD OPERATIONS
-  // ===========================
+  // ==========================================
+  // CORE CRUD OPERATIONS
+  // ==========================================
+
+  async create(data: Prisma.GameCreateInput): Promise<Game> {
+    try {
+      const game = await this.prismaService.game.create({ data });
+
+      this.logger.log(`Game created: ${game.id}`);
+      return game;
+    } catch (error) {
+      this.logger.error('Database error creating game', error.stack);
+      throw error;
+    }
+  }
 
   async findAll(): Promise<Game[]> {
     try {
@@ -42,6 +54,15 @@ export class GamesRepository {
     }
   }
 
+  async findByIdOrThrow(id: number): Promise<Game> {
+    const game = await this.findById(id);
+    if (!game) {
+      this.logger.warn(`Game lookup failed: ID ${id} not found`);
+      throw new NotFoundException(`Game with ID ${id} not found`);
+    }
+    return game;
+  }
+
   async findBySlug(slug: string): Promise<Game | null> {
     try {
       const game = await this.prismaService.game.findUnique({
@@ -58,15 +79,6 @@ export class GamesRepository {
     }
   }
 
-  async findByIdOrThrow(id: number): Promise<Game> {
-    const game = await this.findById(id);
-    if (!game) {
-      this.logger.warn(`Game lookup failed: ID ${id} not found`);
-      throw new NotFoundException(`Game with ID ${id} not found`);
-    }
-    return game;
-  }
-
   async findBySlugOrThrow(slug: string): Promise<Game> {
     const game = await this.findBySlug(slug);
     if (!game) {
@@ -76,16 +88,25 @@ export class GamesRepository {
     return game;
   }
 
-  async create(data: Prisma.GameCreateInput): Promise<Game> {
-    try {
-      const game = await this.prismaService.game.create({ data });
-
-      this.logger.log(`Game created: ${game.id}`);
-      return game;
-    } catch (error) {
-      this.logger.error('Database error creating game', error.stack);
-      throw error;
+  async findByIdentifier(identifier: string): Promise<Game | null> {
+    const numericId = parseInt(identifier, 10);
+    if (!isNaN(numericId) && numericId.toString() === identifier) {
+      return this.findById(numericId);
     }
+    return this.findBySlug(identifier);
+  }
+
+  async findByIdentifierOrThrow(identifier: string): Promise<Game> {
+    const game = await this.findByIdentifier(identifier);
+    if (!game) {
+      this.logger.warn(
+        `Game lookup failed: identifier ${identifier} not found`,
+      );
+      throw new NotFoundException(
+        `Game with identifier ${identifier} not found`,
+      );
+    }
+    return game;
   }
 
   async update(id: number, data: Prisma.GameUpdateInput): Promise<Game> {
@@ -163,11 +184,25 @@ export class GamesRepository {
     }
   }
 
-  // ===========================
-  // RELATIONSHIP QUERIES
-  // ===========================
+  // ==========================================
+  // QUERY OPERATIONS
+  // ==========================================
 
-  // ===========================
-  // FRONTEND-SPECIFIC QUERIES
-  // ===========================
+  findBySeason() {} // findBySeason(seasonId)
+
+  findByCurrentSeason() {} // findByCurrentSeason()
+
+  findByWeek() {} // findByWeek(seasonId, weekNumber)
+
+  findByCurrentSeasonAndWeek() {} // findByCurrentSeasonAndWeek(weekNumber)
+
+  findByDate() {} // findByDate(date)
+
+  findByDateRange() {} // findByDateRange(startDate, endDate)
+
+  findByGameType() {} // findByGameType(gameType)
+
+  findByGameTypeAndSeason() {} // findByGameTypeAndSeason(gameType, seasonId)
+
+  findByGameTypeAndCurrentSeason() {} // findByGameTypeAndCurrentSeason(gameType)
 }

@@ -8,9 +8,21 @@ export class StadiumsRepository {
 
   constructor(private readonly prismaService: PrismaService) {}
 
-  // ===========================
-  // BASIC CRUD OPERATIONS
-  // ===========================
+  // ==========================================
+  // CORE CRUD OPERATIONS
+  // ==========================================
+
+  async create(data: Prisma.StadiumCreateInput): Promise<Stadium> {
+    try {
+      const stadium = await this.prismaService.stadium.create({ data });
+
+      this.logger.log(`Stadium created: ${stadium.id}`);
+      return stadium;
+    } catch (error) {
+      this.logger.error('Database error creating stadium', error.stack);
+      throw error;
+    }
+  }
 
   async findAll(): Promise<Stadium[]> {
     try {
@@ -42,6 +54,15 @@ export class StadiumsRepository {
     }
   }
 
+  async findByIdOrThrow(id: number): Promise<Stadium> {
+    const stadium = await this.findById(id);
+    if (!stadium) {
+      this.logger.warn(`Stadium lookup failed: ID ${id} not found`);
+      throw new NotFoundException(`Stadium with ID ${id} not found`);
+    }
+    return stadium;
+  }
+
   async findBySlug(slug: string): Promise<Stadium | null> {
     try {
       const stadium = await this.prismaService.stadium.findUnique({
@@ -58,15 +79,6 @@ export class StadiumsRepository {
     }
   }
 
-  async findByIdOrThrow(id: number): Promise<Stadium> {
-    const stadium = await this.findById(id);
-    if (!stadium) {
-      this.logger.warn(`Stadium lookup failed: ID ${id} not found`);
-      throw new NotFoundException(`Stadium with ID ${id} not found`);
-    }
-    return stadium;
-  }
-
   async findBySlugOrThrow(slug: string): Promise<Stadium> {
     const stadium = await this.findBySlug(slug);
     if (!stadium) {
@@ -76,16 +88,25 @@ export class StadiumsRepository {
     return stadium;
   }
 
-  async create(data: Prisma.StadiumCreateInput): Promise<Stadium> {
-    try {
-      const stadium = await this.prismaService.stadium.create({ data });
-
-      this.logger.log(`Stadium created: ${stadium.id}`);
-      return stadium;
-    } catch (error) {
-      this.logger.error('Database error creating stadium', error.stack);
-      throw error;
+  async findByIdentifier(identifier: string): Promise<Stadium | null> {
+    const numericId = parseInt(identifier, 10);
+    if (!isNaN(numericId) && numericId.toString() === identifier) {
+      return this.findById(numericId);
     }
+    return this.findBySlug(identifier);
+  }
+
+  async findByIdentifierOrThrow(identifier: string): Promise<Stadium> {
+    const stadium = await this.findByIdentifier(identifier);
+    if (!stadium) {
+      this.logger.warn(
+        `Stadium lookup failed: identifier ${identifier} not found`,
+      );
+      throw new NotFoundException(
+        `Stadium with identifier ${identifier} not found`,
+      );
+    }
+    return stadium;
   }
 
   async update(id: number, data: Prisma.StadiumUpdateInput): Promise<Stadium> {
@@ -172,4 +193,10 @@ export class StadiumsRepository {
       throw error;
     }
   }
+
+  // ==========================================
+  // QUERY OPERATIONS
+  // ==========================================
+
+  findByLocation() {} // findByLocation(city, state)
 }

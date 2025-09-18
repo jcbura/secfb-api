@@ -3,7 +3,7 @@ import {
   StadiumResponseDto,
   UpdateStadiumRequestDto,
 } from '@/modules/stadiums/dtos';
-import { StadiumsRepository } from '@/modules/stadiums/stadiums.repository';
+import { StadiumsRepository } from '@/modules/stadiums/repositories';
 import { Injectable } from '@nestjs/common';
 import { Stadium } from '@prisma/client';
 
@@ -32,13 +32,9 @@ export class StadiumsService {
     return stadiums.map(stadium => this.toResponseDto(stadium));
   }
 
-  async findById(id: number): Promise<StadiumResponseDto> {
-    const stadium = await this.stadiumsRepository.findByIdOrThrow(id);
-    return this.toResponseDto(stadium);
-  }
-
-  async findBySlug(slug: string): Promise<StadiumResponseDto> {
-    const stadium = await this.stadiumsRepository.findBySlugOrThrow(slug);
+  async findByIdentifier(identifier: string): Promise<StadiumResponseDto> {
+    const stadium =
+      await this.stadiumsRepository.findByIdentifierOrThrow(identifier);
     return this.toResponseDto(stadium);
   }
 

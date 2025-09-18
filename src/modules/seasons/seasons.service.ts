@@ -3,7 +3,7 @@ import {
   SeasonResponseDto,
   UpdateSeasonRequestDto,
 } from '@/modules/seasons/dtos';
-import { SeasonsRepository } from '@/modules/seasons/seasons.repository';
+import { SeasonsRepository } from '@/modules/seasons/repositories';
 import { Injectable } from '@nestjs/common';
 import { Season } from '@prisma/client';
 
@@ -36,13 +36,9 @@ export class SeasonsService {
     return seasons.map(season => this.toResponseDto(season));
   }
 
-  async findById(id: number): Promise<SeasonResponseDto> {
-    const season = await this.seasonsRepository.findByIdOrThrow(id);
-    return this.toResponseDto(season);
-  }
-
-  async findBySlug(slug: string): Promise<SeasonResponseDto> {
-    const season = await this.seasonsRepository.findBySlugOrThrow(slug);
+  async findByIdentifier(identifier: string): Promise<SeasonResponseDto> {
+    const season =
+      await this.seasonsRepository.findByIdentifierOrThrow(identifier);
     return this.toResponseDto(season);
   }
 
