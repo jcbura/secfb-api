@@ -3,7 +3,7 @@ import {
   StadiumResponseDto,
   UpdateStadiumRequestDto,
 } from '@/modules/stadiums/dtos';
-import { StadiumsRepository } from '@/modules/stadiums/repositories';
+import { StadiumsRepository } from '@/modules/stadiums/stadiums.repository';
 import { Injectable } from '@nestjs/common';
 import { Stadium } from '@prisma/client';
 

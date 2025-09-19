@@ -1,4 +1,4 @@
-import { GamesRepository } from '@/modules/games/repositories';
+import { GamesRepository } from '@/modules/games/games.repository';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()

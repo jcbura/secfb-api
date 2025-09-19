@@ -1,4 +1,4 @@
-import { TeamsRepository } from '@/modules/teams/repositories';
+import { TeamsRepository } from '@/modules/teams/teams.repository';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()

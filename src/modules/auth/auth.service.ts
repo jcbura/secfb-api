@@ -18,7 +18,7 @@ export class AuthService {
       return null;
     }
 
-    const isMatch = encryption.compareAdminPassword(password);
+    const isMatch = await encryption.compareAdminPassword(password);
     if (!isMatch) {
       return null;
     }

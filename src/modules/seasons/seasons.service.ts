@@ -3,7 +3,7 @@ import {
   SeasonResponseDto,
   UpdateSeasonRequestDto,
 } from '@/modules/seasons/dtos';
-import { SeasonsRepository } from '@/modules/seasons/repositories';
+import { SeasonsRepository } from '@/modules/seasons/seasons.repository';
 import { Injectable } from '@nestjs/common';
 import { Season } from '@prisma/client';
 

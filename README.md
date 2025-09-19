@@ -12,11 +12,14 @@ The SECFB API provides a backend service for managing college football data incl
 
 ### Core Functionality
 
-- **Teams Management**: Team profiles with logos, conference info, and season stats
-- **Seasons Management**: Multi-year season tracking with current season indicators
-- **Stadiums Management**: Stadium information including capacity, location, and team associations
-- **Games Management**: Game scheduling, results, and participant tracking
 - **Admin Authentication**: JWT-based authentication with refresh token support
+- **Games Management**: Game scheduling, results, and participant tracking
+- **Logos Management**: Team logo storage with support for light/dark variants
+- **Participants Management**: Track team participation in games including home/away status, scores, and win/loss results
+- **Seasons Management**: Multi-year season tracking with current season indicators
+- **Snapshots Management**: Store comprehensive team statistics per season including rankings, records, and performance metrics
+- **Stadiums Management**: Stadium information including capacity, location, and team associations
+- **Teams Management**: Team profiles with logos, conference info, and season stats
 
 ### Technical Features
 
@@ -176,24 +179,22 @@ src/
 │   ├── filters/           # Exception filters
 │   ├── interceptors/      # Response interceptors
 │   ├── prisma/            # Database schema and migrations
+│   ├── repositories/      # Repositories
 │   └── utils/             # Utility functions
 ├── modules/               # Feature modules
 │   ├── auth/              # Auth management
 │   ├── games/             # Games management
+│   ├── logos/             # Logos management
+│   ├── participants/      # Games management
 │   ├── prisma/            # Database service
 │   ├── seasons/           # Seasons management
+│   ├── snapshots/         # Snapshots management
 │   ├── stadiums/          # Stadiums management
 │   └── teams/             # Teams management
 ├── app.module.ts          # Root application module
 ├── config.ts              # Environment configuration
 └── main.ts                # Application entry point
 ```
-
-## Roadmap
-
-- [x] Authentication module
-- [ ] Complete teams module
-- [ ] Complete games module
 
 ---
 
