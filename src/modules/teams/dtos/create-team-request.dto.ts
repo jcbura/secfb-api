@@ -34,7 +34,7 @@ export class CreateTeamRequestDto {
   @IsEnum(Conference)
   conference: Conference;
 
-  @ApiPropertyOptional({ type: Number, example: 1, minimum: 1 })
+  @ApiPropertyOptional({ type: Number, minimum: 1 })
   @IsNumber()
   @Min(1)
   @IsOptional()

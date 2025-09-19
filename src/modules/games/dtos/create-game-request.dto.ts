@@ -18,60 +18,60 @@ export class CreateGameRequestDto {
   @IsOptional()
   name?: string;
 
-  @ApiProperty({ type: String, example: new Date().toISOString() })
+  @ApiProperty({ type: String, example: '2025-11-29T00:00' })
   @IsDateString()
   @IsNotEmpty()
   date: string;
 
-  @ApiProperty({ type: Boolean, example: true })
+  @ApiProperty({ type: Boolean })
   @IsBoolean()
   isTimeTBD: boolean;
 
-  @ApiPropertyOptional({ type: Number, example: 1, minimum: 0, maximum: 16 })
+  @ApiPropertyOptional({ type: Number, minimum: 0, maximum: 16 })
   @IsNumber()
   @Min(0)
   @Max(16)
   @IsOptional()
   weekNumber?: number;
 
-  @ApiPropertyOptional({ type: Number, example: 101821, minimum: 0 })
+  @ApiPropertyOptional({ type: Number, minimum: 0 })
   @IsNumber()
   @Min(0)
   @IsOptional()
   attendance?: number;
 
-  @ApiProperty({ enum: GameType, example: GameType.REGULAR_SEASON })
+  @ApiProperty({ enum: GameType })
   @IsEnum(GameType)
   gameType: GameType;
 
-  @ApiProperty({ type: Boolean, example: false })
+  @ApiProperty({ type: Boolean })
   @IsBoolean()
   isConferenceGame: boolean;
 
-  @ApiProperty({ type: Boolean, example: false })
+  @ApiProperty({ type: Boolean })
   @IsBoolean()
   isNeutralSite: boolean;
 
-  @ApiProperty({ enum: GameStatus, example: GameStatus.SCHEDULED })
+  @ApiProperty({ enum: GameStatus })
   @IsEnum(GameStatus)
   status: GameStatus;
 
-  @ApiProperty({ type: Boolean, example: false })
+  @ApiProperty({ type: Boolean })
   @IsBoolean()
   endedInOvertime: boolean;
 
-  @ApiPropertyOptional({ type: Number, example: 1, minimum: 1 })
+  @ApiPropertyOptional({ type: Number, minimum: 1 })
   @IsNumber()
   @Min(1)
   @IsOptional()
   overtimes?: number;
 
-  @ApiProperty({ type: Number, example: 1, minimum: 1 })
+  @ApiProperty({ type: Number, minimum: 1 })
   @IsNumber()
   @Min(1)
   seasonId: number;
 
-  @ApiProperty({ type: Number, example: 1, minimum: 1 })
+  @ApiProperty({ type: Number, minimum: 1 })
   @IsNumber()
   @Min(1)
   stadiumId: number;

@@ -7,17 +7,17 @@ export class CreateSeasonRequestDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ type: String, example: new Date().toISOString() })
+  @ApiProperty({ type: String, example: '2025-08-23T11:00' })
   @IsDateString()
   @IsNotEmpty()
   startDate: string;
 
-  @ApiProperty({ type: String, example: new Date().toISOString() })
+  @ApiProperty({ type: String, example: '2026-01-19T18:30' })
   @IsDateString()
   @IsNotEmpty()
   endDate: string;
 
-  @ApiProperty({ type: Boolean, example: true })
+  @ApiProperty({ type: Boolean })
   @IsBoolean()
   isCurrentSeason: boolean;
 }

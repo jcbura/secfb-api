@@ -4,7 +4,6 @@ import { IsNotEmpty, IsNumber, IsString, IsUrl, Min } from 'class-validator';
 export class CreateLogoRequestDto {
   @ApiProperty({
     type: String,
-    example: 'https://a.espncdn.com/i/teamlogos/ncaa/500/333.png',
   })
   @IsUrl()
   @IsNotEmpty()
@@ -12,7 +11,6 @@ export class CreateLogoRequestDto {
 
   @ApiProperty({
     type: String,
-    example: 'https://a.espncdn.com/i/teamlogos/ncaa/500-dark/333.png',
   })
   @IsUrl()
   @IsNotEmpty()
@@ -21,7 +19,7 @@ export class CreateLogoRequestDto {
   @ApiProperty({ type: Number, example: 500, minimum: 1 })
   @IsNumber()
   @Min(1)
-  width: 500;
+  width: number;
 
   @ApiProperty({ type: Number, example: 500, minimum: 1 })
   @IsNumber()
@@ -33,7 +31,7 @@ export class CreateLogoRequestDto {
   @IsNotEmpty()
   alt: string;
 
-  @ApiProperty({ type: Number, example: 1, minimum: 1 })
+  @ApiProperty({ type: Number, minimum: 1 })
   @IsNumber()
   @Min(1)
   teamId: number;
