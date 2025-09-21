@@ -1,12 +1,34 @@
-import { BaseRepository } from '@/common/repositories';
+import {
+  BaseRepository,
+  PrismaClientOrTransaction,
+} from '@/common/repositories';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { NotFoundException } from '@nestjs/common';
 
-export abstract class CoreRepository<
-  T,
-  CreateInput,
-  UpdateInput,
-> extends BaseRepository<T, CreateInput, UpdateInput> {
+export interface CoreRepositoryInterface<T, CreateInput, UpdateInput>
+  extends BaseRepository<T, CreateInput, UpdateInput> {
+  findBySlug(
+    slug: string,
+    client?: PrismaClientOrTransaction,
+  ): Promise<T | null>;
+  findBySlugOrThrow(
+    slug: string,
+    client?: PrismaClientOrTransaction,
+  ): Promise<T>;
+  findByIdentifier(
+    identifier: string,
+    client?: PrismaClientOrTransaction,
+  ): Promise<T | null>;
+  findByIdentifierOrThrow(
+    identifier: string,
+    client?: PrismaClientOrTransaction,
+  ): Promise<T>;
+}
+
+export abstract class CoreRepository<T, CreateInput, UpdateInput>
+  extends BaseRepository<T, CreateInput, UpdateInput>
+  implements CoreRepositoryInterface<T, CreateInput, UpdateInput>
+{
   constructor(
     protected readonly prismaService: PrismaService,
     protected modelName: string,
@@ -14,11 +36,14 @@ export abstract class CoreRepository<
     super(prismaService, modelName);
   }
 
-  async findBySlug(slug: string): Promise<T | null> {
+  async findBySlug(
+    slug: string,
+    client?: PrismaClientOrTransaction,
+  ): Promise<T | null> {
     try {
-      const model = this.getModel();
+      const model = this.getModel(client);
       const entity = await model.findUnique({
-        where: { slug, deletedAt: null },
+        where: { slug },
       });
 
       return entity;
@@ -31,11 +56,14 @@ export abstract class CoreRepository<
     }
   }
 
-  async findBySlugOrThrow(slug: string): Promise<T> {
-    const entity = await this.findBySlug(slug);
+  async findBySlugOrThrow(
+    slug: string,
+    client?: PrismaClientOrTransaction,
+  ): Promise<T> {
+    const entity = await this.findBySlug(slug, client);
     if (!entity) {
       this.logger.warn(
-        `${this.modelName} lookup failed: slug ${slug} not found`,
+        `Lookup failed: ${this.modelName.toLowerCase()} with slug ${slug} not found`,
       );
       throw new NotFoundException(
         `${this.modelName} with slug ${slug} not found`,
@@ -44,19 +72,25 @@ export abstract class CoreRepository<
     return entity;
   }
 
-  async findByIdentifier(identifier: string): Promise<T | null> {
+  async findByIdentifier(
+    identifier: string,
+    client?: PrismaClientOrTransaction,
+  ): Promise<T | null> {
     const numericId = parseInt(identifier, 10);
     if (!isNaN(numericId) && numericId.toString() === identifier) {
-      return this.findById(numericId);
+      return this.findById(numericId, client);
     }
-    return this.findBySlug(identifier);
+    return this.findBySlug(identifier, client);
   }
 
-  async findByIdentifierOrThrow(identifier: string): Promise<T> {
-    const entity = await this.findByIdentifier(identifier);
+  async findByIdentifierOrThrow(
+    identifier: string,
+    client?: PrismaClientOrTransaction,
+  ): Promise<T> {
+    const entity = await this.findByIdentifier(identifier, client);
     if (!entity) {
       this.logger.warn(
-        `${this.modelName} lookup failed: identifier ${identifier} not found`,
+        `Lookup failed: ${this.modelName.toLowerCase()} with identifier ${identifier} not found`,
       );
       throw new NotFoundException(
         `${this.modelName} with identifier ${identifier} not found`,
@@ -65,8 +99,9 @@ export abstract class CoreRepository<
     return entity;
   }
 
-  protected getModel() {
+  protected getModel(client?: PrismaClientOrTransaction) {
+    const prismaClient = client || this.prismaService;
     const modelName = this.modelName.toLowerCase();
-    return this.prismaService[modelName];
+    return prismaClient[modelName];
   }
 }

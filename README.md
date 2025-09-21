@@ -8,16 +8,68 @@ The SECFB API provides a backend service for managing college football data incl
 
 > Replaces the outdated [sec-web-backend](https://github.com/jcbura/sec-web-backend) repository.
 
+## Endpoints
+
+```typescript
+/**
+ * ===== GAMES =====
+ * POST     /games
+ * POST     /games/:seasonId
+ * GET      /games
+ * GET      /games/:identifier
+ * PATCH    /games/:id
+ * DELETE   /games/:id
+ *
+ * PATCH    /games/:id/participants
+ * POST     /games/:id/complete
+ *
+ * ===== SEASONS =====
+ * POST     /seasons
+ * GET      /seasons
+ * GET      /seasons/:identifier
+ * PATCH    /seasons/:id
+ * DELETE   /seasons/:id
+ *
+ * ===== STADIUMS =====
+ * POST     /stadiums
+ * GET      /stadiums
+ * GET      /stadiums/:identifier
+ * PATCH    /stadiums/:id
+ * DELETE   /stadiums/:id
+ *
+ * ===== TEAMS =====
+ * POST     /teams
+ * GET      /teams
+ * GET      /teams/:identifier
+ * PATCH    /teams/:id
+ * DELETE   /teams/:id
+ *
+ * POST     /teams/:id/logo
+ * PATCH    /teams/:id/logo
+ * DELETE   /teams/:id/logo
+ *
+ * PUT      /teams/:id/stadium/:stadiumId
+ * DELETE   /teams/:id/stadium
+ *
+ * GET      /teams/:id/snapshots
+ * GET      /teams/:id/snapshots/current
+ * GET      /teams/:id/snapshots/:seasonId
+ * POST     /teams/:id/snapshots
+ * POST     /teams/:id/snapshots/:seasonId
+ * PATCH    /teams/:id/snapshots
+ * PATCH    /teams/:id/snapshots/:seasonId
+ * DELETE   /teams/:id/snapshots
+ * DELETE   /teams/:id/snapshots/:seasonId
+ */
+```
+
 ## Features
 
 ### Core Functionality
 
 - **Admin Authentication**: JWT-based authentication with refresh token support
 - **Games Management**: Game scheduling, results, and participant tracking
-- **Logos Management**: Team logo storage with support for light/dark variants
-- **Participants Management**: Track team participation in games including home/away status, scores, and win/loss results
 - **Seasons Management**: Multi-year season tracking with current season indicators
-- **Snapshots Management**: Store comprehensive team statistics per season including rankings, records, and performance metrics
 - **Stadiums Management**: Stadium information including capacity, location, and team associations
 - **Teams Management**: Team profiles with logos, conference info, and season stats
 
@@ -27,7 +79,6 @@ The SECFB API provides a backend service for managing college football data incl
 - **API Documentation**: Auto-generated Swagger/OpenAPI docs
 - **Data Validation**: Input validation with class-validator
 - **Database Management**: Prisma ORM with PostgreSQL
-- **Soft Deletes**: Safe data deletion with restore capabilities
 - **CORS Support**: Cross-origin resource sharing
 - **Structured Responses**: Consistent API response format
 - **Security**: Bcrypt password hashing, signed cookies, JWT tokens
@@ -184,11 +235,8 @@ src/
 ├── modules/               # Feature modules
 │   ├── auth/              # Auth management
 │   ├── games/             # Games management
-│   ├── logos/             # Logos management
-│   ├── participants/      # Games management
 │   ├── prisma/            # Database service
 │   ├── seasons/           # Seasons management
-│   ├── snapshots/         # Snapshots management
 │   ├── stadiums/          # Stadiums management
 │   └── teams/             # Teams management
 ├── app.module.ts          # Root application module

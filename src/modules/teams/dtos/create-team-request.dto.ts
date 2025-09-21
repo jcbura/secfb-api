@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsString,
   Min,
+  ValidateIf,
 } from 'class-validator';
 
 export class CreateTeamRequestDto {
@@ -34,9 +35,10 @@ export class CreateTeamRequestDto {
   @IsEnum(Conference)
   conference: Conference;
 
-  @ApiPropertyOptional({ type: Number, minimum: 1 })
+  @ApiPropertyOptional({ type: Number, minimum: 1, nullable: true })
+  @ValidateIf((_, value) => value !== null)
   @IsNumber()
   @Min(1)
   @IsOptional()
-  stadiumId?: number;
+  stadiumId?: number | null;
 }

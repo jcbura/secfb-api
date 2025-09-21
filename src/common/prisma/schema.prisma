@@ -24,9 +24,8 @@ model Team {
   teamSeasonSnapshots TeamSeasonSnapshot[]
 
   // Metadata
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("teams")
 }
@@ -44,9 +43,8 @@ model Logo {
   teamId Int  @unique @map("team_id")
 
   // Metadata
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("logos")
 }
@@ -83,9 +81,8 @@ model TeamSeasonSnapshot {
   seasonId Int    @map("season_id")
 
   // Metadata
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([teamId, seasonId])
   @@map("team_season_snapshots")
@@ -106,9 +103,8 @@ model Stadium {
   games Game[]
 
   // Metadata
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([name, city, state])
   @@map("stadiums")
@@ -127,9 +123,8 @@ model Season {
   teamSeasonSnapshots TeamSeasonSnapshot[]
 
   // Metadata
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([startDate, endDate])
   @@map("seasons")
@@ -158,9 +153,8 @@ model Game {
   gameParticipants GameParticipant[]
 
   // Metadata
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([seasonId, date, stadiumId])
   @@map("games")
@@ -179,9 +173,8 @@ model GameParticipant {
   teamId Int  @map("team_id")
 
   // Metadata
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([gameId, teamId])
   @@map("game_participants")

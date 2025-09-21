@@ -19,7 +19,6 @@ CREATE TABLE "public"."teams" (
     "stadium_id" INTEGER,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
-    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "teams_pkey" PRIMARY KEY ("id")
 );
@@ -35,7 +34,6 @@ CREATE TABLE "public"."logos" (
     "team_id" INTEGER NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
-    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "logos_pkey" PRIMARY KEY ("id")
 );
@@ -69,7 +67,6 @@ CREATE TABLE "public"."team_season_snapshots" (
     "season_id" INTEGER NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
-    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "team_season_snapshots_pkey" PRIMARY KEY ("id")
 );
@@ -79,13 +76,13 @@ CREATE TABLE "public"."stadiums" (
     "id" SERIAL NOT NULL,
     "slug" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "nickname" TEXT,
     "field" TEXT,
     "city" TEXT NOT NULL,
     "state" TEXT NOT NULL,
     "capacity" INTEGER,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
-    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "stadiums_pkey" PRIMARY KEY ("id")
 );
@@ -100,7 +97,6 @@ CREATE TABLE "public"."seasons" (
     "is_current_season" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
-    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "seasons_pkey" PRIMARY KEY ("id")
 );
@@ -118,13 +114,12 @@ CREATE TABLE "public"."games" (
     "is_conference_game" BOOLEAN NOT NULL,
     "is_neutral_site" BOOLEAN NOT NULL DEFAULT false,
     "status" "public"."GameStatus" NOT NULL DEFAULT 'SCHEDULED',
-    "ended_in_overtime" BOOLEAN,
+    "ended_in_overtime" BOOLEAN NOT NULL,
     "overtimes" INTEGER,
     "season_id" INTEGER NOT NULL,
     "stadium_id" INTEGER NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
-    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "games_pkey" PRIMARY KEY ("id")
 );
@@ -139,7 +134,6 @@ CREATE TABLE "public"."game_participants" (
     "team_id" INTEGER NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
-    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "game_participants_pkey" PRIMARY KEY ("id")
 );

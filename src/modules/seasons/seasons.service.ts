@@ -3,31 +3,18 @@ import {
   SeasonResponseDto,
   UpdateSeasonRequestDto,
 } from '@/modules/seasons/dtos';
-import { SeasonsRepository } from '@/modules/seasons/seasons.repository';
+import { SeasonsRepository } from '@/modules/seasons/repositories';
 import { Injectable } from '@nestjs/common';
-import { Season } from '@prisma/client';
+import { Prisma, Season } from '@prisma/client';
 
 @Injectable()
 export class SeasonsService {
   constructor(private readonly seasonsRepository: SeasonsRepository) {}
 
-  async create(
-    createSeasonRequestDto: CreateSeasonRequestDto,
-  ): Promise<SeasonResponseDto> {
-    const createData = { ...createSeasonRequestDto };
+  async create(dto: CreateSeasonRequestDto): Promise<SeasonResponseDto> {
+    const data: Prisma.SeasonCreateInput = this.buildCreateData(dto);
 
-    createData.startDate = new Date(
-      createSeasonRequestDto.startDate,
-    ).toISOString();
-    createData.endDate = new Date(createSeasonRequestDto.endDate).toISOString();
-
-    const slug = this.generateSlug(createData.startDate, createData.endDate);
-
-    const season = await this.seasonsRepository.create({
-      ...createData,
-      slug,
-    });
-
+    const season = await this.seasonsRepository.create(data);
     return this.toResponseDto(season);
   }
 
@@ -44,50 +31,59 @@ export class SeasonsService {
 
   async update(
     id: number,
-    updateSeasonRequestDto: UpdateSeasonRequestDto,
+    dto: UpdateSeasonRequestDto,
   ): Promise<SeasonResponseDto> {
-    const updatedData = { ...updateSeasonRequestDto };
-    let slug: string;
+    const data: Prisma.SeasonUpdateInput = await this.buildUpdateData(id, dto);
 
-    if (updateSeasonRequestDto.startDate) {
-      updatedData.startDate = new Date(
-        updateSeasonRequestDto.startDate,
-      ).toISOString();
-    }
-    if (updateSeasonRequestDto.endDate) {
-      updatedData.endDate = new Date(
-        updateSeasonRequestDto.endDate,
-      ).toISOString();
-    }
-
-    if (updateSeasonRequestDto.startDate || updateSeasonRequestDto.endDate) {
-      const season = await this.seasonsRepository.findByIdOrThrow(id);
-      const newStartDate = updatedData.startDate ?? season.startDate;
-      const newEndDate = updatedData.endDate ?? season.endDate;
-      slug = this.generateSlug(newStartDate, newEndDate);
-    }
-
-    const updatedSeason = await this.seasonsRepository.update(id, {
-      ...updatedData,
-      ...(slug && { slug }),
-    });
-
-    return this.toResponseDto(updatedSeason);
-  }
-
-  async softDelete(id: number): Promise<SeasonResponseDto> {
-    const season = await this.seasonsRepository.softDelete(id);
+    const season = await this.seasonsRepository.update(id, data);
     return this.toResponseDto(season);
   }
 
-  async restore(id: number): Promise<SeasonResponseDto> {
-    const season = await this.seasonsRepository.restore(id);
+  async delete(id: number): Promise<SeasonResponseDto> {
+    const season = await this.seasonsRepository.delete(id);
     return this.toResponseDto(season);
   }
 
-  async hardDelete(id: number): Promise<SeasonResponseDto> {
-    const season = await this.seasonsRepository.hardDelete(id);
-    return this.toResponseDto(season);
+  private buildCreateData(
+    dto: CreateSeasonRequestDto,
+  ): Prisma.SeasonCreateInput {
+    const startDate = new Date(dto.startDate).toISOString();
+    const endDate = new Date(dto.endDate).toISOString();
+
+    return {
+      ...dto,
+      startDate,
+      endDate,
+      slug: this.generateSlug(startDate, endDate),
+    };
+  }
+
+  private async buildUpdateData(
+    id: number,
+    dto: UpdateSeasonRequestDto,
+  ): Promise<Prisma.SeasonUpdateInput> {
+    const data: Prisma.SeasonUpdateInput = { ...dto };
+
+    const startDate = dto.startDate
+      ? new Date(dto.startDate).toISOString()
+      : undefined;
+    const endDate = dto.endDate
+      ? new Date(dto.endDate).toISOString()
+      : undefined;
+
+    if (startDate) data.startDate = startDate;
+    if (endDate) data.endDate = endDate;
+
+    if (startDate || endDate) {
+      const existingStadium = await this.seasonsRepository.findByIdOrThrow(id);
+
+      data.slug = this.generateSlug(
+        startDate ?? existingStadium.startDate,
+        endDate ?? existingStadium.endDate,
+      );
+    }
+
+    return data;
   }
 
   private generateSlug(start: string | Date, end: string | Date): string {

@@ -21,7 +21,7 @@ async function bootstrap() {
   app.enableCors({
     credentials: true,
     origin: environmentVariables.CORS_ORIGIN_REGEXP,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+    methods: ['POST', 'GET', 'PATCH', 'DELETE', 'PUT'],
   });
 
   app.useGlobalFilters(

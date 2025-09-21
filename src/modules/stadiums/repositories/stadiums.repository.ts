@@ -1,15 +1,15 @@
 import { CoreRepository } from '@/common/repositories';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
-import { Prisma, Team } from '@prisma/client';
+import { Prisma, Stadium } from '@prisma/client';
 
 @Injectable()
-export class TeamsRepository extends CoreRepository<
-  Team,
-  Prisma.TeamCreateInput,
-  Prisma.TeamUpdateInput
+export class StadiumsRepository extends CoreRepository<
+  Stadium,
+  Prisma.StadiumCreateInput,
+  Prisma.StadiumUpdateInput
 > {
   constructor(prismaService: PrismaService) {
-    super(prismaService, 'Season');
+    super(prismaService, 'Stadium');
   }
 }

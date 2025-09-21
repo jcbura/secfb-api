@@ -41,9 +41,9 @@ export class StadiumsController {
   @Auth()
   @Post()
   async create(
-    @Body() createStadiumRequestDto: CreateStadiumRequestDto,
+    @Body() dto: CreateStadiumRequestDto,
   ): Promise<StadiumResponseDto> {
-    return this.stadiumsService.create(createStadiumRequestDto);
+    return this.stadiumsService.create(dto);
   }
 
   @ApiOperation({ summary: 'Find all stadiums' })
@@ -99,16 +99,16 @@ export class StadiumsController {
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateStadiumRequestDto: UpdateStadiumRequestDto,
+    @Body() dto: UpdateStadiumRequestDto,
   ): Promise<StadiumResponseDto> {
-    return this.stadiumsService.update(id, updateStadiumRequestDto);
+    return this.stadiumsService.update(id, dto);
   }
 
-  @ApiOperation({ summary: 'Soft delete stadium by ID' })
+  @ApiOperation({ summary: 'Delete stadium by ID' })
   @ApiParam({ name: 'id', type: Number })
   @ApiResponse({
     status: 200,
-    description: 'Soft deleted stadium by ID successfully',
+    description: 'Deleted stadium by ID successfully',
     type: class SoftDeletedStadiumResponseDto extends withBaseResponse(
       StadiumResponseDto,
     ) {},
@@ -118,38 +118,6 @@ export class StadiumsController {
   softDelete(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<StadiumResponseDto> {
-    return this.stadiumsService.softDelete(id);
-  }
-
-  @ApiOperation({ summary: 'Restore soft-deleted stadium by ID' })
-  @ApiParam({ name: 'id', type: Number })
-  @ApiResponse({
-    status: 200,
-    description: 'Restored soft-deleted stadium by ID successfully',
-    type: class RestoreStadiumResponseDto extends withBaseResponse(
-      StadiumResponseDto,
-    ) {},
-  })
-  @Auth()
-  @Patch(':id/restore')
-  restore(@Param('id', ParseIntPipe) id: number): Promise<StadiumResponseDto> {
-    return this.stadiumsService.restore(id);
-  }
-
-  @ApiOperation({ summary: 'Hard delete stadium by ID' })
-  @ApiParam({ name: 'id', type: Number })
-  @ApiResponse({
-    status: 200,
-    description: 'Hard deleted stadium by ID successfully',
-    type: class HardDeletedStadiumResponseDto extends withBaseResponse(
-      StadiumResponseDto,
-    ) {},
-  })
-  @Auth()
-  @Delete(':id/hard')
-  hardDelete(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<StadiumResponseDto> {
-    return this.stadiumsService.hardDelete(id);
+    return this.stadiumsService.delete(id);
   }
 }

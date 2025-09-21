@@ -1,15 +1,22 @@
 import { PrismaService } from '@/modules/prisma/prisma.service';
 import { Logger, NotFoundException } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
 
+export type PrismaTransaction = Parameters<
+  Parameters<PrismaClient['$transaction']>[0]
+>[0];
+export type PrismaClientOrTransaction = PrismaClient | PrismaTransaction;
 export interface BaseRepositoryInterface<T, CreateInput, UpdateInput> {
-  create(data: CreateInput): Promise<T>;
-  findAll(): Promise<T[]>;
-  findById(id: number): Promise<T | null>;
-  findByIdOrThrow(id: number): Promise<T>;
-  update(id: number, data: UpdateInput): Promise<T>;
-  softDelete(id: number): Promise<T>;
-  restore(id: number): Promise<T>;
-  hardDelete(id: number): Promise<T>;
+  create(data: CreateInput, client?: PrismaClientOrTransaction): Promise<T>;
+  findAll(client?: PrismaClientOrTransaction): Promise<T[]>;
+  findById(id: number, client?: PrismaClientOrTransaction): Promise<T | null>;
+  findByIdOrThrow(id: number, client?: PrismaClientOrTransaction): Promise<T>;
+  update(
+    id: number,
+    data: UpdateInput,
+    client?: PrismaClientOrTransaction,
+  ): Promise<T>;
+  delete(id: number, client?: PrismaClientOrTransaction): Promise<T>;
 }
 
 export abstract class BaseRepository<T, CreateInput, UpdateInput>
@@ -24,12 +31,15 @@ export abstract class BaseRepository<T, CreateInput, UpdateInput>
     this.logger = new Logger(`${modelName}Repository`);
   }
 
-  async create(data: CreateInput): Promise<T> {
+  async create(
+    data: CreateInput,
+    client?: PrismaClientOrTransaction,
+  ): Promise<T> {
     try {
-      const model = this.getModel();
+      const model = this.getModel(client);
       const entity = await model.create({ data });
 
-      this.logger.log(`${this.modelName} created: ${entity.id}`);
+      this.logger.log(`${this.modelName} created with ID ${entity.id}`);
       return entity;
     } catch (error) {
       this.logger.error(
@@ -40,11 +50,10 @@ export abstract class BaseRepository<T, CreateInput, UpdateInput>
     }
   }
 
-  async findAll(): Promise<T[]> {
+  async findAll(client?: PrismaClientOrTransaction): Promise<T[]> {
     try {
-      const model = this.getModel();
+      const model = this.getModel(client);
       const entities = await model.findMany({
-        where: { deletedAt: null },
         orderBy: { createdAt: 'asc' },
       });
 
@@ -58,11 +67,14 @@ export abstract class BaseRepository<T, CreateInput, UpdateInput>
     }
   }
 
-  async findById(id: number): Promise<T | null> {
+  async findById(
+    id: number,
+    client?: PrismaClientOrTransaction,
+  ): Promise<T | null> {
     try {
-      const model = this.getModel();
+      const model = this.getModel(client);
       const entity = await model.findUnique({
-        where: { id, deletedAt: null },
+        where: { id },
       });
 
       return entity;
@@ -75,122 +87,68 @@ export abstract class BaseRepository<T, CreateInput, UpdateInput>
     }
   }
 
-  async findByIdOrThrow(id: number): Promise<T> {
-    const entity = await this.findById(id);
+  async findByIdOrThrow(
+    id: number,
+    client?: PrismaClientOrTransaction,
+  ): Promise<T> {
+    const entity = await this.findById(id, client);
     if (!entity) {
-      this.logger.warn(`${this.modelName} lookup failed: ID ${id} not found`);
+      this.logger.warn(
+        `Lookup failed: ${this.modelName.toLowerCase()} with ID ${id} not found`,
+      );
       throw new NotFoundException(`${this.modelName} with ID ${id} not found`);
     }
     return entity;
   }
 
-  async update(id: number, data: UpdateInput): Promise<T> {
+  async update(
+    id: number,
+    data: UpdateInput,
+    client?: PrismaClientOrTransaction,
+  ): Promise<T> {
     try {
-      await this.findByIdOrThrow(id);
+      await this.findByIdOrThrow(id, client);
 
-      const model = this.getModel();
+      const model = this.getModel(client);
       const entity = await model.update({
         where: { id },
         data,
       });
 
-      this.logger.log(`${this.modelName} updated: ${entity.id}`);
+      this.logger.log(`${this.modelName} updated with ID ${entity.id}`);
       return entity;
     } catch (error) {
       this.logger.error(
-        `Database error updating ${this.modelName.toLowerCase()} ${id}`,
+        `Database error updating ${this.modelName.toLowerCase()} with ID ${id}`,
         error.stack,
       );
       throw error;
     }
   }
 
-  async softDelete(id: number): Promise<T> {
+  async delete(id: number, client?: PrismaClientOrTransaction): Promise<T> {
     try {
-      await this.findByIdOrThrow(id);
+      await this.findByIdOrThrow(id, client);
 
-      const model = this.getModel();
-      const entity = await model.update({
+      const model = this.getModel(client);
+      const entity = await model.delete({
         where: { id },
-        data: { deletedAt: new Date() },
       });
 
-      this.logger.log(`${this.modelName} soft deleted: ${entity.id}`);
+      this.logger.log(`${this.modelName} deleted with ID ${entity.id}`);
       return entity;
     } catch (error) {
       this.logger.error(
-        `Database error soft deleting ${this.modelName.toLowerCase()} ${id}`,
+        `Database error deleting ${this.modelName.toLowerCase()} with ID ${id}`,
         error.stack,
       );
       throw error;
     }
   }
 
-  async restore(id: number): Promise<T> {
-    try {
-      const model = this.getModel();
-      const entity = await model.findUnique({
-        where: { id },
-      });
-      if (!entity) {
-        this.logger.warn(
-          `Restore failed: ${this.modelName.toLowerCase()} ${id} not found`,
-        );
-        throw new NotFoundException(
-          `${this.modelName} with ID ${id} not found`,
-        );
-      }
-
-      const restoredEntity = await model.update({
-        where: { id },
-        data: { deletedAt: null },
-      });
-
-      this.logger.log(`${this.modelName} restored: ${restoredEntity.id}`);
-      return restoredEntity;
-    } catch (error) {
-      this.logger.error(
-        `Database error restoring ${this.modelName.toLowerCase()} ${id}`,
-        error.stack,
-      );
-      throw error;
-    }
-  }
-
-  async hardDelete(id: number): Promise<T> {
-    try {
-      const model = this.getModel();
-      const entity = await model.findUnique({
-        where: { id },
-      });
-      if (!entity) {
-        this.logger.warn(
-          `Hard delete failed: ${this.modelName.toLowerCase()} ${id} not found`,
-        );
-        throw new NotFoundException(
-          `${this.modelName} with ID ${id} not found`,
-        );
-      }
-
-      const deletedEntity = await model.delete({
-        where: { id },
-      });
-
-      this.logger.warn(
-        `${this.modelName} permanently deleted: ${deletedEntity.id}`,
-      );
-      return deletedEntity;
-    } catch (error) {
-      this.logger.error(
-        `Database error hard deleting ${this.modelName.toLowerCase()} ${id}`,
-        error.stack,
-      );
-      throw error;
-    }
-  }
-
-  protected getModel() {
+  protected getModel(client?: PrismaClientOrTransaction) {
+    const prismaClient = client || this.prismaService;
     const modelName = this.modelName.toLowerCase();
-    return this.prismaService[modelName];
+    return prismaClient[modelName];
   }
 }

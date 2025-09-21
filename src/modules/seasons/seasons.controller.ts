@@ -41,9 +41,9 @@ export class SeasonsController {
   @Auth()
   @Post()
   async create(
-    @Body() createSeasonRequestDto: CreateSeasonRequestDto,
+    @Body() dto: CreateSeasonRequestDto,
   ): Promise<SeasonResponseDto> {
-    return this.seasonsService.create(createSeasonRequestDto);
+    return this.seasonsService.create(dto);
   }
 
   @ApiOperation({ summary: 'Find all seasons' })
@@ -98,62 +98,25 @@ export class SeasonsController {
   @Patch(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateSeasonRequestDto: UpdateSeasonRequestDto,
+    @Body() dto: UpdateSeasonRequestDto,
   ): Promise<SeasonResponseDto> {
-    return this.seasonsService.update(id, updateSeasonRequestDto);
+    return this.seasonsService.update(id, dto);
   }
 
-  @ApiOperation({ summary: 'Soft delete season by ID' })
+  @ApiOperation({ summary: 'Delete season by ID' })
   @ApiParam({ name: 'id', type: Number })
   @ApiResponse({
     status: 200,
-    description: 'Soft deleted season by ID successfully',
+    description: 'Deleted season by ID successfully',
     type: class SoftDeletedSeasonResponseDto extends withBaseResponse(
       SeasonResponseDto,
     ) {},
   })
   @Auth()
   @Delete(':id')
-  async softDelete(
+  async delete(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<SeasonResponseDto> {
-    return this.seasonsService.softDelete(id);
-  }
-
-  @ApiOperation({ summary: 'Restore soft-deleted season by ID' })
-  @ApiParam({ name: 'id', type: Number })
-  @ApiResponse({
-    status: 200,
-    description: 'Restored soft-deleted season by ID successfully',
-    type: class RestoredSeasonResponseDto extends withBaseResponse(
-      SeasonResponseDto,
-    ) {},
-  })
-  @Auth()
-  @Patch(':id/restore')
-  async restore(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<SeasonResponseDto> {
-    return this.seasonsService.restore(id);
-  }
-
-  @ApiOperation({ summary: 'Hard delete stadium by ID' })
-  @ApiParam({
-    name: 'id',
-    type: Number,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Hard deleted season by ID successfully',
-    type: class HardDeletedSeasonResponseDto extends withBaseResponse(
-      SeasonResponseDto,
-    ) {},
-  })
-  @Auth()
-  @Delete(':id/hard')
-  async hardDelete(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<SeasonResponseDto> {
-    return this.seasonsService.hardDelete(id);
+    return this.seasonsService.delete(id);
   }
 }
