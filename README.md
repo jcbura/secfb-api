@@ -13,53 +13,52 @@ The SECFB API provides a backend service for managing college football data incl
 ```typescript
 /**
  * ===== GAMES =====
- * POST     /games
- * POST     /games/:seasonId
- * GET      /games
- * GET      /games/:identifier
- * PATCH    /games/:id
- * DELETE   /games/:id
+ * POST     /games - GameCompleteResponseDto
+ * GET      /games - GameCompleteResponseDto[]
+ * GET      /games/:identifier - GameCompleteResponseDto
+ * PATCH    /games/:id - GameResponseDto
+ * DELETE   /games/:id - GameResponseDto
  *
- * PATCH    /games/:id/participants
- * POST     /games/:id/complete
+ * PATCH    /games/:id/participants - GameCompleteResponseDto
+ * POST     /games/:id/finish - GameCompleteResponseDto
  *
  * ===== SEASONS =====
- * POST     /seasons
- * GET      /seasons
- * GET      /seasons/:identifier
- * PATCH    /seasons/:id
- * DELETE   /seasons/:id
+ * POST     /seasons - SeasonResponseDto
+ * GET      /seasons - SeasonResponseDto[]
+ * GET      /seasons/:identifier - SeasonResponseDto
+ * PATCH    /seasons/:id - SeasonResponseDto
+ * DELETE   /seasons/:id - SeasonResponseDto
  *
  * ===== STADIUMS =====
- * POST     /stadiums
- * GET      /stadiums
- * GET      /stadiums/:identifier
- * PATCH    /stadiums/:id
- * DELETE   /stadiums/:id
+ * POST     /stadiums - StadiumResponseDto
+ * GET      /stadiums - StadiumResponseDto[]
+ * GET      /stadiums/:identifier - StadiumResponseDto
+ * PATCH    /stadiums/:id - StadiumResponseDto
+ * DELETE   /stadiums/:id - StadiumResponseDto
  *
  * ===== TEAMS =====
- * POST     /teams
- * GET      /teams
- * GET      /teams/:identifier
- * PATCH    /teams/:id
- * DELETE   /teams/:id
+ * POST     /teams - TeamCompleteResponseDto
+ * GET      /teams - TeamResposneDto[]
+ * GET      /teams/:identifier - TeamResponseDto
+ * PATCH    /teams/:id - TeamResponseDto
+ * DELETE   /teams/:id - TeamResponseDto
  *
- * POST     /teams/:id/logo
- * PATCH    /teams/:id/logo
- * DELETE   /teams/:id/logo
+ * POST     /teams/:id/logo - LogoResponseDto
+ * PATCH    /teams/:id/logo - LogoResponseDto
+ * DELETE   /teams/:id/logo - LogoResponseDto
  *
- * PUT      /teams/:id/stadium/:stadiumId
- * DELETE   /teams/:id/stadium
+ * PUT      /teams/:id/stadium/:stadiumId - TeamResponseDto
+ * DELETE   /teams/:id/stadium - TeamResponseDto
  *
- * GET      /teams/:id/snapshots
- * GET      /teams/:id/snapshots/current
- * GET      /teams/:id/snapshots/:seasonId
- * POST     /teams/:id/snapshots
- * POST     /teams/:id/snapshots/:seasonId
- * PATCH    /teams/:id/snapshots
- * PATCH    /teams/:id/snapshots/:seasonId
- * DELETE   /teams/:id/snapshots
- * DELETE   /teams/:id/snapshots/:seasonId
+ * GET      /teams/:id/snapshots - SnapshotResponseDto[]
+ * GET      /teams/:id/snapshots/current - SnapshotResponseDto
+ * GET      /teams/:id/snapshots/:seasonId - SnaptshotResposneDto
+ * POST     /teams/:id/snapshots - SnaptshotResposneDto
+ * POST     /teams/:id/snapshots/:seasonId - SnaptshotResposneDto
+ * PATCH    /teams/:id/snapshots - SnaptshotResposneDto
+ * PATCH    /teams/:id/snapshots/:seasonId - SnaptshotResposneDto
+ * DELETE   /teams/:id/snapshots - SnaptshotResposneDto
+ * DELETE   /teams/:id/snapshots/:seasonId - SnaptshotResposneDto
  */
 ```
 

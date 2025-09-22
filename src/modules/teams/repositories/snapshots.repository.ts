@@ -53,7 +53,7 @@ export class SnapshotsRepository extends BaseRepository<
     return snapshots;
   }
 
-  async findBySeasonAndTeam(
+  async findByTeamAndSeason(
     seasonId: number,
     teamId: number,
     client?: PrismaClientOrTransaction,
@@ -75,12 +75,12 @@ export class SnapshotsRepository extends BaseRepository<
     }
   }
 
-  async findBySeasonAndTeamOrThrow(
+  async findByTeamAndSeasonOrThrow(
     seasonId: number,
     teamId: number,
     client?: PrismaClientOrTransaction,
   ): Promise<TeamSeasonSnapshot> {
-    const snapshot = await this.findBySeasonAndTeam(seasonId, teamId, client);
+    const snapshot = await this.findByTeamAndSeason(seasonId, teamId, client);
     if (!snapshot) {
       this.logger.warn(
         `Lookup failed: team season snapshot with season ID ${seasonId} and team ID ${teamId} not found `,
@@ -92,7 +92,7 @@ export class SnapshotsRepository extends BaseRepository<
     return snapshot;
   }
 
-  async findByCurrentSeasonAndTeam(
+  async findByTeamAndCurrentSeason(
     teamId: number,
     client?: PrismaClientOrTransaction,
   ): Promise<TeamSeasonSnapshot | null> {
@@ -113,11 +113,11 @@ export class SnapshotsRepository extends BaseRepository<
     }
   }
 
-  async findByCurrentSeasonAndTeamOrThrow(
+  async findByTeamAndCurrentSeasonOrThrow(
     teamId: number,
     client?: PrismaClientOrTransaction,
   ): Promise<TeamSeasonSnapshot> {
-    const snapshot = await this.findByCurrentSeasonAndTeam(teamId, client);
+    const snapshot = await this.findByTeamAndCurrentSeason(teamId, client);
     if (!snapshot) {
       this.logger.warn(
         `Lookup failed: team season snapshot for current season with team ID ${teamId} not found`,

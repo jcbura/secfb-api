@@ -108,7 +108,7 @@ export class SeasonsController {
   @ApiResponse({
     status: 200,
     description: 'Deleted season by ID successfully',
-    type: class SoftDeletedSeasonResponseDto extends withBaseResponse(
+    type: class DeletedSeasonResponseDto extends withBaseResponse(
       SeasonResponseDto,
     ) {},
   })

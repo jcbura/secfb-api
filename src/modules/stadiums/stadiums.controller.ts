@@ -109,7 +109,7 @@ export class StadiumsController {
   @ApiResponse({
     status: 200,
     description: 'Deleted stadium by ID successfully',
-    type: class SoftDeletedStadiumResponseDto extends withBaseResponse(
+    type: class DeletedStadiumResponseDto extends withBaseResponse(
       StadiumResponseDto,
     ) {},
   })

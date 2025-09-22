@@ -12,11 +12,6 @@ export class CreateParticipantRequestDto {
   @IsOptional()
   score?: number;
 
-  @ApiPropertyOptional({ type: Boolean })
-  @IsBoolean()
-  @IsOptional()
-  isWinner?: boolean;
-
   @ApiProperty({ type: Number, minimum: 1 })
   @IsNumber()
   @Min(1)
