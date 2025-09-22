@@ -189,8 +189,6 @@ npm run db:migrate
 npm run start:dev
 ```
 
-The API will be available at `http://localhost:3000`
-
 ## API Documentation
 
 Once the server is running, access the interactive API documentation at:
