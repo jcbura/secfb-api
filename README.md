@@ -10,56 +10,53 @@ The SECFB API provides a backend service for managing college football data incl
 
 ## Endpoints
 
-```typescript
-/**
- * ===== GAMES =====
- * POST     /games - GameCompleteResponseDto
- * GET      /games - GameCompleteResponseDto[]
- * GET      /games/:identifier - GameCompleteResponseDto
- * PATCH    /games/:id - GameResponseDto
- * DELETE   /games/:id - GameResponseDto
- *
- * PATCH    /games/:id/participants - GameCompleteResponseDto
- * POST     /games/:id/finish - GameCompleteResponseDto
- *
- * ===== SEASONS =====
- * POST     /seasons - SeasonResponseDto
- * GET      /seasons - SeasonResponseDto[]
- * GET      /seasons/:identifier - SeasonResponseDto
- * PATCH    /seasons/:id - SeasonResponseDto
- * DELETE   /seasons/:id - SeasonResponseDto
- *
- * ===== STADIUMS =====
- * POST     /stadiums - StadiumResponseDto
- * GET      /stadiums - StadiumResponseDto[]
- * GET      /stadiums/:identifier - StadiumResponseDto
- * PATCH    /stadiums/:id - StadiumResponseDto
- * DELETE   /stadiums/:id - StadiumResponseDto
- *
- * ===== TEAMS =====
- * POST     /teams - TeamCompleteResponseDto
- * GET      /teams - TeamResposneDto[]
- * GET      /teams/:identifier - TeamResponseDto
- * PATCH    /teams/:id - TeamResponseDto
- * DELETE   /teams/:id - TeamResponseDto
- *
- * POST     /teams/:id/logo - LogoResponseDto
- * PATCH    /teams/:id/logo - LogoResponseDto
- * DELETE   /teams/:id/logo - LogoResponseDto
- *
- * PUT      /teams/:id/stadium/:stadiumId - TeamResponseDto
- * DELETE   /teams/:id/stadium - TeamResponseDto
- *
- * GET      /teams/:id/snapshots - SnapshotResponseDto[]
- * GET      /teams/:id/snapshots/current - SnapshotResponseDto
- * GET      /teams/:id/snapshots/:seasonId - SnaptshotResposneDto
- * POST     /teams/:id/snapshots - SnaptshotResposneDto
- * POST     /teams/:id/snapshots/:seasonId - SnaptshotResposneDto
- * PATCH    /teams/:id/snapshots - SnaptshotResposneDto
- * PATCH    /teams/:id/snapshots/:seasonId - SnaptshotResposneDto
- * DELETE   /teams/:id/snapshots - SnaptshotResposneDto
- * DELETE   /teams/:id/snapshots/:seasonId - SnaptshotResposneDto
- */
+```
+# ===== GAMES =====
+POST     /games                                         # Create game
+GET      /games                                         # List games
+GET      /games/:identifier                             # Get game by slug or ID
+PATCH    /games/:id                                     # Update game
+DELETE   /games/:id                                     # Delete game
+PATCH    /games/:id/participants                        # Set home/away teams + scores
+POST     /games/:id/finalize                            # Finalize game (action)
+
+# ===== SEASONS =====
+POST     /seasons                                       # Create season
+GET      /seasons                                       # List seasons
+GET      /seasons/:identifier                           # Get season by slug or ID
+PATCH    /seasons/:id                                   # Update season
+DELETE   /seasons/:id                                   # Delete season
+
+# ===== STADIUMS =====
+POST     /stadiums                                      # Create stadium
+GET      /stadiums                                      # List stadiums
+GET      /stadiums/:identifier                          # Get stadium by slug or ID
+PATCH    /stadiums/:id                                  # Update stadium
+DELETE   /stadiums/:id                                  # Delete stadium
+
+# ===== TEAMS =====
+POST     /teams                                         # Create team
+GET      /teams                                         # List teams
+GET      /teams/:identifier                             # Get team by slug or ID
+PATCH    /teams/:id                                     # Update team
+DELETE   /teams/:id                                     # Delete team
+
+# Team → Logo (one-to-one)
+POST     /teams/:id/logo                                # Create team logo
+GET      /teams/:identifier/logo                        # Get team logo
+PATCH    /teams/:id/logo                                # Update team logo
+DELETE   /teams/:id/logo                                # Delete team logo
+
+# Team → Stadium (many-to-one)
+PUT      /teams/:id/stadium/:stadiumId                  # Assign stadium to team
+DELETE   /teams/:id/stadium                             # Remove stadium assignment
+
+# Team → Season Snapshots (one-to-many)
+POST     /teams/:id/snapshots                           # Create season snapshot
+GET      /teams/:identifier/snapshots                   # List team's snapshots
+GET      /teams/:identifier/snapshots/:seasonIdentifier # Get specific snapshot
+PATCH    /teams/:id/snapshots/:seasonId                 # Update season snapshot
+DELETE   /teams/:id/snapshots/:seasonId                 # Delete season snapshot
 ```
 
 ## Features

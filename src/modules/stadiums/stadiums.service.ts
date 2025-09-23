@@ -39,9 +39,8 @@ export class StadiumsService {
     return this.toResponseDto(stadium);
   }
 
-  async delete(id: number): Promise<StadiumResponseDto> {
-    const stadium = await this.stadiumsRepository.delete(id);
-    return this.toResponseDto(stadium);
+  async delete(id: number): Promise<void> {
+    await this.stadiumsRepository.delete(id);
   }
 
   private buildCreateData(

@@ -1,3 +1,4 @@
+import { withBaseArrayResponse, withBaseResponse } from '@/common/utils';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Conference } from '@prisma/client';
 
@@ -26,3 +27,8 @@ export class TeamResponseDto {
   @ApiPropertyOptional()
   stadiumId?: number;
 }
+
+export class BaseTeamResponseDto extends withBaseResponse(TeamResponseDto) {}
+export class BaseArrayTeamResponseDto extends withBaseArrayResponse(
+  TeamResponseDto,
+) {}

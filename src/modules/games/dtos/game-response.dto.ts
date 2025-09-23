@@ -1,3 +1,4 @@
+import { withBaseResponse } from '@/common/utils';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { GameStatus, GameType } from '@prisma/client';
 
@@ -47,3 +48,5 @@ export class GameResponseDto {
   @ApiProperty()
   stadiumId: number;
 }
+
+export class BaseGameResponseDto extends withBaseResponse(GameResponseDto) {}

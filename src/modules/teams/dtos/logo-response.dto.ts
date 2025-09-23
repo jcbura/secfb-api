@@ -1,3 +1,4 @@
+import { withBaseResponse } from '@/common/utils';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class LogoResponseDto {
@@ -22,3 +23,5 @@ export class LogoResponseDto {
   @ApiProperty()
   teamId: number;
 }
+
+export class BaseLogoResponseDto extends withBaseResponse(LogoResponseDto) {}

@@ -1,12 +1,12 @@
 import { Auth } from '@/common/decorators';
-import { withBaseArrayResponse, withBaseResponse } from '@/common/utils';
 import {
+  BaseArrayGameCompleteResponseDto,
+  BaseGameCompleteResponseDto,
+  BaseGameResponseDto,
   CreateGameCompleteRequestDto,
   FinalizeGameRequestDto,
-  GameCompleteResponseDto,
-  GameResponseDto,
+  ParticipantsRequestDto,
   UpdateGameRequestDto,
-  UpdateParticipantsRequestDto,
 } from '@/modules/games/dtos';
 import { GamesService } from '@/modules/games/games.service';
 import { Controller, Delete, Get, Patch, Post } from '@nestjs/common';
@@ -27,10 +27,7 @@ export class GamesController {
   @ApiBody({ type: CreateGameCompleteRequestDto })
   @ApiResponse({
     status: 201,
-    description: 'Created game successfully',
-    type: class CreateGameCompleteResponseDto extends withBaseResponse(
-      GameCompleteResponseDto,
-    ) {},
+    type: BaseGameCompleteResponseDto,
   })
   @Auth()
   @Post()
@@ -39,15 +36,12 @@ export class GamesController {
   @ApiOperation({ summary: 'Find all games' })
   @ApiResponse({
     status: 200,
-    description: 'Found all games successfully',
-    type: class FindAllGamesCompleteResponseDto extends withBaseArrayResponse(
-      GameCompleteResponseDto,
-    ) {},
+    type: BaseArrayGameCompleteResponseDto,
   })
   @Get()
   async findAll() {}
 
-  @ApiOperation({ summary: 'Find game by ID or slug' })
+  @ApiOperation({ summary: 'Find game' })
   @ApiParam({
     name: 'identifier',
     type: String,
@@ -58,64 +52,48 @@ export class GamesController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Found game by ID or slug successfully',
-    type: class FindGameCompleteResponseDto extends withBaseResponse(
-      GameCompleteResponseDto,
-    ) {},
+    type: BaseGameCompleteResponseDto,
   })
   @Get(':identifier')
-  async findByIdentifier() {}
+  async find() {}
 
-  @ApiOperation({ summary: 'Update game by ID' })
+  @ApiOperation({ summary: 'Update game' })
   @ApiBody({ type: UpdateGameRequestDto })
   @ApiParam({ name: 'id', type: Number })
   @ApiResponse({
     status: 200,
-    description: 'Updated game by ID successfully',
-    type: class UpdateGameResponseDto extends withBaseResponse(
-      GameResponseDto,
-    ) {},
+    type: BaseGameResponseDto,
   })
   @Auth()
   @Patch(':id')
   async update() {}
 
-  @ApiOperation({ summary: 'Delete game by ID' })
+  @ApiOperation({ summary: 'Delete game' })
   @ApiParam({ name: 'id', type: Number })
   @ApiResponse({
-    status: 200,
-    description: 'Deleted game by ID successfully',
-    type: class DeletedGameResponseDto extends withBaseResponse(
-      GameResponseDto,
-    ) {},
+    status: 204,
   })
   @Auth()
   @Delete(':id')
   async delete() {}
 
-  @ApiOperation({ summary: 'Update game participants by game ID' })
-  @ApiBody({ type: UpdateParticipantsRequestDto })
+  @ApiOperation({ summary: 'Update game participants' })
+  @ApiBody({ type: ParticipantsRequestDto })
   @ApiParam({ name: 'id', type: Number })
   @ApiResponse({
     status: 200,
-    description: 'Updated by participants by game ID',
-    type: class UpdateParticipantsResponseDto extends withBaseResponse(
-      GameCompleteResponseDto,
-    ) {},
+    type: BaseGameCompleteResponseDto,
   })
   @Auth()
   @Patch(':id/participants')
   async updateParticipants() {}
 
-  @ApiOperation({ summary: 'Finalize game by game ID' })
+  @ApiOperation({ summary: 'Finalize game' })
   @ApiBody({ type: FinalizeGameRequestDto })
   @ApiParam({ name: 'id', type: Number })
   @ApiResponse({
     status: 200,
-    description: 'Finalized game by game ID',
-    type: class FinalizeGameResponseDto extends withBaseResponse(
-      GameCompleteResponseDto,
-    ) {},
+    type: BaseGameCompleteResponseDto,
   })
   @Auth()
   @Post(':id/finalize')

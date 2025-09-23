@@ -1,3 +1,4 @@
+import { withBaseArrayResponse, withBaseResponse } from '@/common/utils';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class SnapshotResponseDto {
@@ -76,3 +77,10 @@ export class SnapshotResponseDto {
   @ApiProperty()
   seasonId: number;
 }
+
+export class BaseSnapshotResponseDto extends withBaseResponse(
+  SnapshotResponseDto,
+) {}
+export class BaseArraySnapshotResponseDto extends withBaseArrayResponse(
+  SnapshotResponseDto,
+) {}

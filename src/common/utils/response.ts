@@ -46,7 +46,7 @@ export function withBaseResponse<BaseType extends Constructor>(
     message: string;
 
     @ApiProperty({
-      type: Base,
+      type: () => Base,
       ...options,
     })
     @Type(() => Base)
@@ -78,7 +78,7 @@ export function withBaseArrayResponse<BaseType extends Constructor>(
 
     @ApiProperty({
       isArray: true,
-      type: Base,
+      type: () => Base,
       ...options,
     })
     @Type(() => Base)

@@ -1,6 +1,7 @@
 import { Auth } from '@/common/decorators';
-import { withBaseArrayResponse, withBaseResponse } from '@/common/utils';
 import {
+  BaseArraySeasonResponseDto,
+  BaseSeasonResponseDto,
   CreateSeasonRequestDto,
   SeasonResponseDto,
   UpdateSeasonRequestDto,
@@ -33,10 +34,7 @@ export class SeasonsController {
   @ApiBody({ type: CreateSeasonRequestDto })
   @ApiResponse({
     status: 201,
-    description: 'Created season successfully',
-    type: class CreateSeasonResponseDto extends withBaseResponse(
-      SeasonResponseDto,
-    ) {},
+    type: BaseSeasonResponseDto,
   })
   @Auth()
   @Post()
@@ -49,17 +47,14 @@ export class SeasonsController {
   @ApiOperation({ summary: 'Find all seasons' })
   @ApiResponse({
     status: 200,
-    description: 'Found all seasons successfully',
-    type: class FindAllSeasonsResponseDto extends withBaseArrayResponse(
-      SeasonResponseDto,
-    ) {},
+    type: BaseArraySeasonResponseDto,
   })
   @Get()
   async findAll(): Promise<SeasonResponseDto[]> {
     return this.seasonsService.findAll();
   }
 
-  @ApiOperation({ summary: 'Find season by ID or slug' })
+  @ApiOperation({ summary: 'Find season' })
   @ApiParam({
     name: 'identifier',
     type: String,
@@ -70,29 +65,23 @@ export class SeasonsController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Found season by ID or slug successfully',
-    type: class FindSeasonResponseDto extends withBaseResponse(
-      SeasonResponseDto,
-    ) {},
+    type: BaseSeasonResponseDto,
   })
   @Get(':identifier')
-  async findByIdentifier(
+  async find(
     @Param('identifier') identifier: string,
   ): Promise<SeasonResponseDto> {
     return this.seasonsService.findByIdentifier(identifier);
   }
 
   @ApiOperation({
-    summary: 'Update season by ID',
+    summary: 'Update season',
   })
   @ApiBody({ type: UpdateSeasonRequestDto })
   @ApiParam({ name: 'id', type: Number })
   @ApiResponse({
     status: 200,
-    description: 'Updated season by ID successfully',
-    type: class UpdateSeasonResponseDto extends withBaseResponse(
-      SeasonResponseDto,
-    ) {},
+    type: BaseSeasonResponseDto,
   })
   @Auth()
   @Patch(':id')
@@ -103,20 +92,14 @@ export class SeasonsController {
     return this.seasonsService.update(id, dto);
   }
 
-  @ApiOperation({ summary: 'Delete season by ID' })
+  @ApiOperation({ summary: 'Delete season' })
   @ApiParam({ name: 'id', type: Number })
   @ApiResponse({
-    status: 200,
-    description: 'Deleted season by ID successfully',
-    type: class DeletedSeasonResponseDto extends withBaseResponse(
-      SeasonResponseDto,
-    ) {},
+    status: 204,
   })
   @Auth()
   @Delete(':id')
-  async delete(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<SeasonResponseDto> {
+  async delete(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.seasonsService.delete(id);
   }
 }

@@ -1,10 +1,10 @@
 import {
   CreateGameRequestDto,
-  CreateParticipantRequestDto,
+  ParticipantsRequestDto,
 } from '@/modules/games/dtos';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayMinSize, ValidateNested } from 'class-validator';
+import { ValidateNested } from 'class-validator';
 
 export class CreateGameCompleteRequestDto {
   @ApiProperty({ type: () => CreateGameRequestDto })
@@ -13,27 +13,9 @@ export class CreateGameCompleteRequestDto {
   game: CreateGameRequestDto;
 
   @ApiProperty({
-    type: () => [CreateParticipantRequestDto],
-    minItems: 2,
-    maxItems: 2,
-    example: [
-      {
-        isHomeTeam: false,
-        score: 0,
-        gameId: 1,
-        teamId: 1,
-      },
-      {
-        isHomeTeam: true,
-        score: 0,
-        gameId: 1,
-        teamId: 2,
-      },
-    ],
+    type: () => ParticipantsRequestDto,
   })
-  @ValidateNested({ each: true })
-  @Type(() => CreateParticipantRequestDto)
-  @ArrayMinSize(2)
-  @ArrayMaxSize(2)
-  participants: CreateParticipantRequestDto[];
+  @ValidateNested()
+  @Type(() => ParticipantsRequestDto)
+  participants: ParticipantsRequestDto;
 }

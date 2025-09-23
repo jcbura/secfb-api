@@ -30,9 +30,4 @@ export class CreateLogoRequestDto {
   @IsString()
   @IsNotEmpty()
   alt: string;
-
-  @ApiProperty({ type: Number, minimum: 1 })
-  @IsNumber()
-  @Min(1)
-  teamId: number;
 }

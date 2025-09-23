@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNumber, IsOptional, Min } from 'class-validator';
 
-export class UpdateParticipantsRequestDto {
+export class ParticipantsRequestDto {
   @ApiProperty({ type: Number, minimum: 1 })
   @IsNumber()
   @Min(1)

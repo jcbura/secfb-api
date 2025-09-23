@@ -1,4 +1,6 @@
 import { PrismaModule } from '@/modules/prisma/prisma.module';
+import { SeasonsModule } from '@/modules/seasons/seasons.module';
+import { StadiumsModule } from '@/modules/stadiums/stadiums.module';
 import {
   LogosRepository,
   SnapshotsRepository,
@@ -9,7 +11,7 @@ import { TeamsService } from '@/modules/teams/teams.service';
 import { Module } from '@nestjs/common';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, SeasonsModule, StadiumsModule],
   controllers: [TeamsController],
   providers: [
     LogosRepository,

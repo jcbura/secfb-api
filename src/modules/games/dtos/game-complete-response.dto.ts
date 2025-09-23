@@ -1,3 +1,4 @@
+import { withBaseArrayResponse, withBaseResponse } from '@/common/utils';
 import { GameResponseDto, ParticipantResponseDto } from '@/modules/games/dtos';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -12,3 +13,10 @@ export class GameCompleteResponseDto {
   })
   participants: ParticipantResponseDto[];
 }
+
+export class BaseGameCompleteResponseDto extends withBaseResponse(
+  GameCompleteResponseDto,
+) {}
+export class BaseArrayGameCompleteResponseDto extends withBaseArrayResponse(
+  GameCompleteResponseDto,
+) {}

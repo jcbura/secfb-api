@@ -1,6 +1,7 @@
 import { Auth } from '@/common/decorators';
-import { withBaseArrayResponse, withBaseResponse } from '@/common/utils';
 import {
+  BaseArrayStadiumResponseDto,
+  BaseStadiumResponseDto,
   CreateStadiumRequestDto,
   StadiumResponseDto,
   UpdateStadiumRequestDto,
@@ -33,10 +34,7 @@ export class StadiumsController {
   @ApiBody({ type: CreateStadiumRequestDto })
   @ApiResponse({
     status: 201,
-    description: 'Created stadium successfully',
-    type: class CreateStadiumResponseDto extends withBaseResponse(
-      StadiumResponseDto,
-    ) {},
+    type: BaseStadiumResponseDto,
   })
   @Auth()
   @Post()
@@ -49,17 +47,14 @@ export class StadiumsController {
   @ApiOperation({ summary: 'Find all stadiums' })
   @ApiResponse({
     status: 200,
-    description: 'Found all stadiums successfully',
-    type: class FindAllStadiumsResponseDto extends withBaseArrayResponse(
-      StadiumResponseDto,
-    ) {},
+    type: BaseArrayStadiumResponseDto,
   })
   @Get()
   findAll(): Promise<StadiumResponseDto[]> {
     return this.stadiumsService.findAll();
   }
 
-  @ApiOperation({ summary: 'Find stadium by ID or slug' })
+  @ApiOperation({ summary: 'Find stadium' })
   @ApiParam({
     name: 'identifier',
     type: String,
@@ -73,27 +68,21 @@ export class StadiumsController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Found stadium by ID or slug successfully',
-    type: class FindStadiumResponseDto extends withBaseResponse(
-      StadiumResponseDto,
-    ) {},
+    type: BaseStadiumResponseDto,
   })
   @Get(':identifier')
-  async findByIdentifier(
+  async find(
     @Param('identifier') identifier: string,
   ): Promise<StadiumResponseDto> {
     return this.stadiumsService.findByIdentifier(identifier);
   }
 
-  @ApiOperation({ summary: 'Update stadium by ID' })
+  @ApiOperation({ summary: 'Update stadium' })
   @ApiBody({ type: UpdateStadiumRequestDto })
   @ApiParam({ name: 'id', type: Number })
   @ApiResponse({
     status: 200,
-    description: 'Updated stadium by ID successfully',
-    type: class UpdateStadiumResponseDto extends withBaseResponse(
-      StadiumResponseDto,
-    ) {},
+    type: BaseStadiumResponseDto,
   })
   @Auth()
   @Patch(':id')
@@ -104,20 +93,14 @@ export class StadiumsController {
     return this.stadiumsService.update(id, dto);
   }
 
-  @ApiOperation({ summary: 'Delete stadium by ID' })
+  @ApiOperation({ summary: 'Delete stadium' })
   @ApiParam({ name: 'id', type: Number })
   @ApiResponse({
-    status: 200,
-    description: 'Deleted stadium by ID successfully',
-    type: class DeletedStadiumResponseDto extends withBaseResponse(
-      StadiumResponseDto,
-    ) {},
+    status: 204,
   })
   @Auth()
   @Delete(':id')
-  softDelete(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<StadiumResponseDto> {
+  delete(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.stadiumsService.delete(id);
   }
 }

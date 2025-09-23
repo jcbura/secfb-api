@@ -145,10 +145,5 @@ export class CreateSnapshotRequestDto {
   @ApiProperty({ type: Number, minimum: 1 })
   @IsNumber()
   @Min(1)
-  teamId: number;
-
-  @ApiProperty({ type: Number, minimum: 1 })
-  @IsNumber()
-  @Min(1)
   seasonId: number;
 }

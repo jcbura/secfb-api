@@ -1,3 +1,4 @@
+import { withBaseArrayResponse, withBaseResponse } from '@/common/utils';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class StadiumResponseDto {
@@ -25,3 +26,10 @@ export class StadiumResponseDto {
   @ApiPropertyOptional()
   capacity?: number;
 }
+
+export class BaseStadiumResponseDto extends withBaseResponse(
+  StadiumResponseDto,
+) {}
+export class BaseArrayStadiumResponseDto extends withBaseArrayResponse(
+  StadiumResponseDto,
+) {}

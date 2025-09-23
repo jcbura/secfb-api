@@ -39,9 +39,8 @@ export class SeasonsService {
     return this.toResponseDto(season);
   }
 
-  async delete(id: number): Promise<SeasonResponseDto> {
-    const season = await this.seasonsRepository.delete(id);
-    return this.toResponseDto(season);
+  async delete(id: number): Promise<void> {
+    await this.seasonsRepository.delete(id);
   }
 
   private buildCreateData(

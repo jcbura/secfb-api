@@ -1,3 +1,4 @@
+import { withBaseResponse } from '@/common/utils';
 import { StadiumResponseDto } from '@/modules/stadiums/dtos';
 import {
   LogoResponseDto,
@@ -7,15 +8,19 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class TeamCompleteResponseDto {
-  @ApiProperty({ type: TeamResponseDto })
+  @ApiProperty({ type: () => TeamResponseDto })
   team: TeamResponseDto;
 
-  @ApiPropertyOptional({ type: LogoResponseDto })
+  @ApiPropertyOptional({ type: () => LogoResponseDto })
   logo?: LogoResponseDto;
 
-  @ApiPropertyOptional({ type: SnapshotResponseDto })
+  @ApiPropertyOptional({ type: () => SnapshotResponseDto })
   snapshot?: SnapshotResponseDto;
 
-  @ApiPropertyOptional({ type: StadiumResponseDto })
+  @ApiPropertyOptional({ type: () => StadiumResponseDto })
   stadium?: StadiumResponseDto;
 }
+
+export class BaseTeamCompleteResponseDto extends withBaseResponse(
+  TeamCompleteResponseDto,
+) {}
