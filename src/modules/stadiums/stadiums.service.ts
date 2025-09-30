@@ -1,72 +1,50 @@
-import {
-  CreateStadiumRequestDto,
-  StadiumResponseDto,
-  UpdateStadiumRequestDto,
-} from '@/modules/stadiums/dtos';
+import { parseIdentifier } from '@/common/utils';
+import { CreateStadiumDto, UpdateStadiumDto } from '@/modules/stadiums/dtos';
 import { StadiumsRepository } from '@/modules/stadiums/repositories';
 import { Injectable } from '@nestjs/common';
-import { Prisma, Stadium } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class StadiumsService {
   constructor(private readonly stadiumsRepository: StadiumsRepository) {}
 
-  async create(dto: CreateStadiumRequestDto): Promise<StadiumResponseDto> {
-    const data: Prisma.StadiumCreateInput = this.buildCreateData(dto);
-
-    const stadium = await this.stadiumsRepository.create(data);
-    return this.toResponseDto(stadium);
+  async create(dto: CreateStadiumDto) {
+    return this.stadiumsRepository.create({
+      data: { ...dto, slug: this.generateSlug(dto.name, dto.city) },
+    });
   }
 
-  async findAll(): Promise<StadiumResponseDto[]> {
-    const stadiums = await this.stadiumsRepository.findAll();
-    return stadiums.map(stadium => this.toResponseDto(stadium));
+  async findMany() {
+    return this.stadiumsRepository.findMany({});
   }
 
-  async findByIdentifier(identifier: string): Promise<StadiumResponseDto> {
-    const stadium =
-      await this.stadiumsRepository.findByIdentifierOrThrow(identifier);
-    return this.toResponseDto(stadium);
+  async find(identifier: string) {
+    const where = parseIdentifier(identifier);
+    return this.stadiumsRepository.findUniqueOrThrow({ where });
   }
 
-  async update(
-    id: number,
-    dto: UpdateStadiumRequestDto,
-  ): Promise<StadiumResponseDto> {
-    const data: Prisma.StadiumUpdateInput = await this.buildUpdateData(id, dto);
-
-    const stadium = await this.stadiumsRepository.update(id, data);
-    return this.toResponseDto(stadium);
-  }
-
-  async delete(id: number): Promise<void> {
-    await this.stadiumsRepository.delete(id);
-  }
-
-  private buildCreateData(
-    dto: CreateStadiumRequestDto,
-  ): Prisma.StadiumCreateInput {
-    return {
-      ...dto,
-      slug: this.generateSlug(dto.name, dto.city),
-    };
-  }
-
-  private async buildUpdateData(
-    id: number,
-    dto: UpdateStadiumRequestDto,
-  ): Promise<Prisma.StadiumUpdateInput> {
+  async update(identifier: string, dto: UpdateStadiumDto) {
+    const where = parseIdentifier(identifier);
     const data: Prisma.StadiumUpdateInput = { ...dto };
 
     if (dto.name || dto.city) {
-      const existingStadium = await this.stadiumsRepository.findByIdOrThrow(id);
-      const newName = dto.name ?? existingStadium.name;
-      const newCity = dto.city ?? existingStadium.city;
+      const existingStadium = await this.stadiumsRepository.findUniqueOrThrow({
+        where,
+        select: { name: true, city: true },
+      });
 
-      data.slug = this.generateSlug(newName, newCity);
+      data.slug = this.generateSlug(
+        dto.name ?? existingStadium.name,
+        dto.city ?? existingStadium.city,
+      );
     }
 
-    return data;
+    return this.stadiumsRepository.update({ where, data });
+  }
+
+  async delete(identifier: string) {
+    const where = parseIdentifier(identifier);
+    return this.stadiumsRepository.delete({ where });
   }
 
   private generateSlug(name: string, city: string): string {
@@ -76,18 +54,5 @@ export class StadiumsService {
       .replace(/[^\w\s-]/g, '')
       .replace(/[-\s]+/g, '-')
       .replace(/^-+|-+$/g, '');
-  }
-
-  private toResponseDto(stadium: Stadium): StadiumResponseDto {
-    return {
-      id: stadium.id,
-      slug: stadium.slug,
-      name: stadium.name,
-      nickname: stadium.nickname,
-      field: stadium.field,
-      city: stadium.city,
-      state: stadium.state,
-      capacity: stadium.capacity,
-    };
   }
 }

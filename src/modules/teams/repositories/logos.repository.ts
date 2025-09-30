@@ -1,49 +1,32 @@
-import {
-  BaseRepository,
-  PrismaClientOrTransaction,
-} from '@/common/repositories';
+import { BaseRepository } from '@/common/repositories';
 import { PrismaService } from '@/modules/prisma/prisma.service';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+import { Injectable } from '@nestjs/common';
 import { Logo, Prisma } from '@prisma/client';
 
 @Injectable()
 export class LogosRepository extends BaseRepository<
   Logo,
-  Prisma.LogoCreateInput,
-  Prisma.LogoUpdateInput
+  Prisma.LogoFindFirstArgs,
+  Prisma.LogoFindFirstOrThrowArgs,
+  Prisma.LogoFindUniqueArgs,
+  Prisma.LogoFindUniqueOrThrowArgs,
+  Prisma.LogoCreateArgs,
+  Prisma.LogoUpdateArgs,
+  Prisma.LogoUpsertArgs,
+  Prisma.LogoDeleteArgs,
+  Prisma.LogoFindManyArgs,
+  Prisma.LogoCreateManyArgs,
+  Prisma.LogoUpdateManyArgs,
+  Prisma.LogoDeleteManyArgs,
+  Prisma.LogoCountArgs,
+  Prisma.LogoAggregateArgs,
+  Prisma.LogoGroupByArgs
 > {
-  constructor(prismaService: PrismaService) {
-    super(prismaService, 'Logo');
-  }
-
-  async findByTeam(
-    teamId: number,
-    client?: PrismaClientOrTransaction,
-  ): Promise<Logo | null> {
-    const prismaClient = client || this.prismaService;
-
-    try {
-      const logo = await prismaClient.logo.findUnique({ where: { teamId } });
-
-      return logo;
-    } catch (error) {
-      this.logger.error(
-        `Database error fetching logo by team ID ${teamId}`,
-        error.stack,
-      );
-      throw error;
-    }
-  }
-
-  async findByTeamOrThrow(
-    teamId: number,
-    client?: PrismaClientOrTransaction,
-  ): Promise<Logo> {
-    const logo = await this.findByTeam(teamId, client);
-    if (!logo) {
-      this.logger.warn(`Lookup failed: logo with team ID ${teamId} not found`);
-      throw new NotFoundException(`Logo with team ID ${teamId} not found`);
-    }
-    return logo;
+  constructor(
+    txHost: TransactionHost<TransactionalAdapterPrisma<PrismaService>>,
+  ) {
+    super(txHost, 'Logo');
   }
 }

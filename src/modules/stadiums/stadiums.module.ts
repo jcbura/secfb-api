@@ -7,7 +7,7 @@ import { Module } from '@nestjs/common';
 @Module({
   imports: [PrismaModule],
   controllers: [StadiumsController],
-  providers: [StadiumsRepository, StadiumsService],
+  providers: [StadiumsService, StadiumsRepository],
   exports: [StadiumsRepository],
 })
 export class StadiumsModule {}

@@ -7,7 +7,7 @@ import { Module } from '@nestjs/common';
 @Module({
   imports: [PrismaModule],
   controllers: [SeasonsController],
-  providers: [SeasonsRepository, SeasonsService],
+  providers: [SeasonsService, SeasonsRepository],
   exports: [SeasonsRepository],
 })
 export class SeasonsModule {}

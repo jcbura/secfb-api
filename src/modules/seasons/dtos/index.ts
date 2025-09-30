@@ -1,3 +1,2 @@
-export * from './create-season-request.dto';
-export * from './season-response.dto';
-export * from './update-season-request.dto';
+export * from './create-season.dto';
+export * from './update-season.dto';

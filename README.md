@@ -12,51 +12,45 @@ The SECFB API provides a backend service for managing college football data incl
 
 ```
 # ===== GAMES =====
-POST     /games                                         # Create game
-GET      /games                                         # List games
-GET      /games/:identifier                             # Get game by slug or ID
-PATCH    /games/:id                                     # Update game
-DELETE   /games/:id                                     # Delete game
-PATCH    /games/:id/participants                        # Set home/away teams + scores
-POST     /games/:id/finalize                            # Finalize game (action)
+POST     /games
+GET      /games
+GET      /games/:identifier
+PATCH    /games/:identifier
+DELETE   /games/:identifier
+
+PATCH    /games/:identifier/score
+PATCH    /games/:identifier/finalize
 
 # ===== SEASONS =====
-POST     /seasons                                       # Create season
-GET      /seasons                                       # List seasons
-GET      /seasons/:identifier                           # Get season by slug or ID
-PATCH    /seasons/:id                                   # Update season
-DELETE   /seasons/:id                                   # Delete season
+POST     /seasons
+GET      /seasons
+GET      /seasons/:identifier
+PATCH    /seasons/:identifier
+DELETE   /seasons/:identifier
+
+PATCH   /seasons/:identifier/current
 
 # ===== STADIUMS =====
-POST     /stadiums                                      # Create stadium
-GET      /stadiums                                      # List stadiums
-GET      /stadiums/:identifier                          # Get stadium by slug or ID
-PATCH    /stadiums/:id                                  # Update stadium
-DELETE   /stadiums/:id                                  # Delete stadium
+POST     /stadiums
+GET      /stadiums
+GET      /stadiums/:identifier
+PATCH    /stadiums/:identifier
+DELETE   /stadiums/:identifier
 
 # ===== TEAMS =====
-POST     /teams                                         # Create team
-GET      /teams                                         # List teams
-GET      /teams/:identifier                             # Get team by slug or ID
-PATCH    /teams/:id                                     # Update team
-DELETE   /teams/:id                                     # Delete team
+POST     /teams
+GET      /teams
+GET      /teams/:identifier
+PATCH    /teams/:identifier
+DELETE   /teams/:identifier
 
-# Team → Logo (one-to-one)
-POST     /teams/:id/logo                                # Create team logo
-GET      /teams/:identifier/logo                        # Get team logo
-PATCH    /teams/:id/logo                                # Update team logo
-DELETE   /teams/:id/logo                                # Delete team logo
+PATCH    /teams/:identifier/logo
+DELETE   /teams/:identifier/logo
 
-# Team → Stadium (many-to-one)
-PUT      /teams/:id/stadium/:stadiumId                  # Assign stadium to team
-DELETE   /teams/:id/stadium                             # Remove stadium assignment
-
-# Team → Season Snapshots (one-to-many)
-POST     /teams/:id/snapshots                           # Create season snapshot
-GET      /teams/:identifier/snapshots                   # List team's snapshots
-GET      /teams/:identifier/snapshots/:seasonIdentifier # Get specific snapshot
-PATCH    /teams/:id/snapshots/:seasonId                 # Update season snapshot
-DELETE   /teams/:id/snapshots/:seasonId                 # Delete season snapshot
+POST     /teams/:identifier/performance/:seasonIdentifier
+GET      /teams/:identifier/performance/:seasonIdentifier
+PATCH    /teams/:identifier/performance/:seasonIdentifier
+DELETE   /teams/:identifier/performance/:seasonIdentifier
 ```
 
 ## Features

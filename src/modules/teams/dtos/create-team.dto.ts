@@ -1,5 +1,7 @@
+import { CreateLogoDto } from '@/modules/teams/dtos';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Conference } from '@prisma/client';
+import { Type } from 'class-transformer';
 import {
   IsEnum,
   IsNotEmpty,
@@ -7,9 +9,10 @@ import {
   IsOptional,
   IsString,
   Min,
+  ValidateNested,
 } from 'class-validator';
 
-export class CreateTeamRequestDto {
+export class CreateTeamDto {
   @ApiProperty({ type: String, example: 'Alabama Crimson Tide' })
   @IsString()
   @IsNotEmpty()
@@ -30,8 +33,9 @@ export class CreateTeamRequestDto {
   @IsNotEmpty()
   mascot: string;
 
-  @ApiProperty({ enum: Conference, example: Conference.SEC })
+  @ApiPropertyOptional({ enum: Conference, example: Conference.SEC })
   @IsEnum(Conference)
+  @IsOptional()
   conference: Conference;
 
   @ApiPropertyOptional({ type: Number, minimum: 1 })
@@ -39,4 +43,9 @@ export class CreateTeamRequestDto {
   @Min(1)
   @IsOptional()
   stadiumId?: number;
+
+  @ApiProperty({ type: () => CreateLogoDto })
+  @ValidateNested()
+  @Type(() => CreateLogoDto)
+  logo: CreateLogoDto;
 }

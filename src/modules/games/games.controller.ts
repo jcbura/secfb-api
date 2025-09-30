@@ -1,22 +1,21 @@
-import { Auth } from '@/common/decorators';
+import { Auth, Identifier } from '@/common/decorators';
 import {
-  BaseArrayGameCompleteResponseDto,
-  BaseGameCompleteResponseDto,
-  BaseGameResponseDto,
-  CreateGameCompleteRequestDto,
-  FinalizeGameRequestDto,
-  ParticipantsRequestDto,
-  UpdateGameRequestDto,
+  CreateGameDto,
+  FinalizeGameDto,
+  UpdateGameDto,
+  UpdateScoreDto,
 } from '@/modules/games/dtos';
 import { GamesService } from '@/modules/games/games.service';
-import { Controller, Delete, Get, Patch, Post } from '@nestjs/common';
 import {
-  ApiBody,
-  ApiOperation,
-  ApiParam,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Games')
 @Controller('games')
@@ -24,78 +23,63 @@ export class GamesController {
   constructor(private readonly gamesService: GamesService) {}
 
   @ApiOperation({ summary: 'Create game' })
-  @ApiBody({ type: CreateGameCompleteRequestDto })
-  @ApiResponse({
-    status: 201,
-    type: BaseGameCompleteResponseDto,
-  })
-  @Auth()
+  // @Auth()
   @Post()
-  async create() {}
+  async create(@Body() dto: CreateGameDto) {
+    return this.gamesService.create(dto);
+  }
 
-  @ApiOperation({ summary: 'Find all games' })
-  @ApiResponse({
-    status: 200,
-    type: BaseArrayGameCompleteResponseDto,
-  })
+  @ApiOperation({ summary: 'Find games' })
   @Get()
-  async findAll() {}
+  async findMany() {
+    return this.gamesService.findMany();
+  }
 
   @ApiOperation({ summary: 'Find game' })
-  @ApiParam({
-    name: 'identifier',
-    type: String,
-    examples: {
-      id: { value: '1', description: 'Find by ID' },
-      slug: { value: '2025-11-29-ala-aub', description: 'Find by slug' },
-    },
-  })
-  @ApiResponse({
-    status: 200,
-    type: BaseGameCompleteResponseDto,
-  })
+  @Identifier('2025-11-29-ala-aub')
   @Get(':identifier')
-  async find() {}
+  async find(@Param('identifier') identifier: string) {
+    return this.gamesService.find(identifier);
+  }
 
   @ApiOperation({ summary: 'Update game' })
-  @ApiBody({ type: UpdateGameRequestDto })
-  @ApiParam({ name: 'id', type: Number })
-  @ApiResponse({
-    status: 200,
-    type: BaseGameResponseDto,
-  })
-  @Auth()
-  @Patch(':id')
-  async update() {}
+  @Identifier('2025-11-29-ala-aub')
+  // @Auth()
+  @Patch(':identifier')
+  async update(
+    @Param('identifier') identifier: string,
+    @Body() dto: UpdateGameDto,
+  ) {
+    return this.gamesService.update(identifier, dto);
+  }
 
   @ApiOperation({ summary: 'Delete game' })
-  @ApiParam({ name: 'id', type: Number })
-  @ApiResponse({
-    status: 204,
-  })
+  @Identifier('2025-11-29-ala-aub')
   @Auth()
-  @Delete(':id')
-  async delete() {}
+  @Delete(':identifier')
+  async delete(@Param('identifier') identifier: string) {
+    return this.gamesService.delete(identifier);
+  }
 
-  @ApiOperation({ summary: 'Update game participants' })
-  @ApiBody({ type: ParticipantsRequestDto })
-  @ApiParam({ name: 'id', type: Number })
-  @ApiResponse({
-    status: 200,
-    type: BaseGameCompleteResponseDto,
-  })
+  @ApiOperation({ summary: 'Update score' })
+  @Identifier('2025-11-29-ala-aub')
   @Auth()
-  @Patch(':id/participants')
-  async updateParticipants() {}
+  @Patch(':identifier/score')
+  async updateScore(
+    @Param('identifier') identifier: string,
+    @Body() dto: UpdateScoreDto,
+  ) {
+    return this.gamesService.updateScore(identifier, dto);
+  }
 
   @ApiOperation({ summary: 'Finalize game' })
-  @ApiBody({ type: FinalizeGameRequestDto })
-  @ApiParam({ name: 'id', type: Number })
-  @ApiResponse({
-    status: 200,
-    type: BaseGameCompleteResponseDto,
-  })
+  @Identifier('2025-11-29-ala-aub')
   @Auth()
-  @Post(':id/finalize')
-  async finalize() {}
+  @Patch(':identifier/finalize')
+  async finalizeGame(
+    @Param('identifier') identifier: string,
+    @Body() dto: FinalizeGameDto,
+  ) {
+    return this.gamesService.finalizeGame(identifier, dto);
+  }
 }

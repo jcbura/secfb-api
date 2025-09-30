@@ -1,46 +1,32 @@
-import {
-  CoreRepository,
-  PrismaClientOrTransaction,
-} from '@/common/repositories';
+import { BaseRepository } from '@/common/repositories';
 import { PrismaService } from '@/modules/prisma/prisma.service';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+import { Injectable } from '@nestjs/common';
 import { Prisma, Season } from '@prisma/client';
 
 @Injectable()
-export class SeasonsRepository extends CoreRepository<
+export class SeasonsRepository extends BaseRepository<
   Season,
-  Prisma.SeasonCreateInput,
-  Prisma.SeasonUpdateInput
+  Prisma.SeasonFindFirstArgs,
+  Prisma.SeasonFindFirstOrThrowArgs,
+  Prisma.SeasonFindUniqueArgs,
+  Prisma.SeasonFindUniqueOrThrowArgs,
+  Prisma.SeasonCreateArgs,
+  Prisma.SeasonUpdateArgs,
+  Prisma.SeasonUpsertArgs,
+  Prisma.SeasonDeleteArgs,
+  Prisma.SeasonFindManyArgs,
+  Prisma.SeasonCreateManyArgs,
+  Prisma.SeasonUpdateManyArgs,
+  Prisma.SeasonDeleteManyArgs,
+  Prisma.SeasonCountArgs,
+  Prisma.SeasonAggregateArgs,
+  Prisma.SeasonGroupByArgs
 > {
-  constructor(prismaService: PrismaService) {
-    super(prismaService, 'Season');
-  }
-
-  async findCurrent(
-    client?: PrismaClientOrTransaction,
-  ): Promise<Season | null> {
-    const prismaClient = client || this.prismaService;
-
-    try {
-      const season = await prismaClient.season.findFirst({
-        where: { isCurrentSeason: true },
-      });
-
-      return season;
-    } catch (error) {
-      this.logger.error('Database error fetching current season', error.stack);
-      throw error;
-    }
-  }
-
-  async findCurrentOrThrow(
-    client?: PrismaClientOrTransaction,
-  ): Promise<Season> {
-    const season = await this.findCurrent(client);
-    if (!season) {
-      this.logger.warn('Lookup failed: no current season found');
-      throw new NotFoundException(`No current season found`);
-    }
-    return season;
+  constructor(
+    txHost: TransactionHost<TransactionalAdapterPrisma<PrismaService>>,
+  ) {
+    super(txHost, 'Season');
   }
 }

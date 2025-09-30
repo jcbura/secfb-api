@@ -17,7 +17,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     const path = request.url;
     const statusCode = exception.getStatus();
-    const message = exception.message;
+    const message = this.extractMessage(exception);
     const cause = exception.cause;
 
     const responseBody: ErrorResponseDto<unknown> = generateErrorResponse(
@@ -29,5 +29,27 @@ export class HttpExceptionFilter implements ExceptionFilter {
     );
 
     response.status(statusCode).json(responseBody);
+  }
+
+  private extractMessage(exception: HttpException): string {
+    const response = exception.getResponse();
+
+    if (typeof response === 'string') {
+      return response;
+    }
+
+    if (typeof response === 'object' && response !== null) {
+      const responseObj = response as any;
+
+      if (typeof responseObj.message === 'string') {
+        return responseObj.message;
+      }
+
+      if (Array.isArray(responseObj.message)) {
+        return responseObj.message.join(', ');
+      }
+    }
+
+    return exception.message;
   }
 }

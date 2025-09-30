@@ -1,11 +1,5 @@
-import { Auth } from '@/common/decorators';
-import {
-  BaseArrayStadiumResponseDto,
-  BaseStadiumResponseDto,
-  CreateStadiumRequestDto,
-  StadiumResponseDto,
-  UpdateStadiumRequestDto,
-} from '@/modules/stadiums/dtos';
+import { Auth, Identifier } from '@/common/decorators';
+import { CreateStadiumDto, UpdateStadiumDto } from '@/modules/stadiums/dtos';
 import { StadiumsService } from '@/modules/stadiums/stadiums.service';
 import {
   Body,
@@ -13,17 +7,10 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
 } from '@nestjs/common';
-import {
-  ApiBody,
-  ApiOperation,
-  ApiParam,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Stadiums')
 @Controller('stadiums')
@@ -31,76 +18,41 @@ export class StadiumsController {
   constructor(private readonly stadiumsService: StadiumsService) {}
 
   @ApiOperation({ summary: 'Create stadium' })
-  @ApiBody({ type: CreateStadiumRequestDto })
-  @ApiResponse({
-    status: 201,
-    type: BaseStadiumResponseDto,
-  })
   @Auth()
   @Post()
-  async create(
-    @Body() dto: CreateStadiumRequestDto,
-  ): Promise<StadiumResponseDto> {
+  async create(@Body() dto: CreateStadiumDto) {
     return this.stadiumsService.create(dto);
   }
 
-  @ApiOperation({ summary: 'Find all stadiums' })
-  @ApiResponse({
-    status: 200,
-    type: BaseArrayStadiumResponseDto,
-  })
+  @ApiOperation({ summary: 'Find stadiums' })
   @Get()
-  findAll(): Promise<StadiumResponseDto[]> {
-    return this.stadiumsService.findAll();
+  async findMany() {
+    return this.stadiumsService.findMany();
   }
 
   @ApiOperation({ summary: 'Find stadium' })
-  @ApiParam({
-    name: 'identifier',
-    type: String,
-    examples: {
-      id: { value: '1', description: 'Find by ID' },
-      slug: {
-        value: 'bryant-denny-stadium-tuscaloosa',
-        description: 'Find by slug',
-      },
-    },
-  })
-  @ApiResponse({
-    status: 200,
-    type: BaseStadiumResponseDto,
-  })
+  @Identifier('bryant-denny-stadium-tuscaloosa')
   @Get(':identifier')
-  async find(
-    @Param('identifier') identifier: string,
-  ): Promise<StadiumResponseDto> {
-    return this.stadiumsService.findByIdentifier(identifier);
+  async find(@Param('identifier') identifier: string) {
+    return this.stadiumsService.find(identifier);
   }
 
   @ApiOperation({ summary: 'Update stadium' })
-  @ApiBody({ type: UpdateStadiumRequestDto })
-  @ApiParam({ name: 'id', type: Number })
-  @ApiResponse({
-    status: 200,
-    type: BaseStadiumResponseDto,
-  })
+  @Identifier('bryant-denny-stadium-tuscaloosa')
   @Auth()
-  @Patch(':id')
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateStadiumRequestDto,
-  ): Promise<StadiumResponseDto> {
-    return this.stadiumsService.update(id, dto);
+  @Patch(':identifier')
+  async update(
+    @Param('identifier') identifier: string,
+    @Body() dto: UpdateStadiumDto,
+  ) {
+    return this.stadiumsService.update(identifier, dto);
   }
 
   @ApiOperation({ summary: 'Delete stadium' })
-  @ApiParam({ name: 'id', type: Number })
-  @ApiResponse({
-    status: 204,
-  })
+  @Identifier('bryant-denny-stadium-tuscaloosa')
   @Auth()
-  @Delete(':id')
-  delete(@Param('id', ParseIntPipe) id: number): Promise<void> {
-    return this.stadiumsService.delete(id);
+  @Delete(':identifier')
+  async delete(@Param('identifier') identifier: string) {
+    return this.stadiumsService.delete(identifier);
   }
 }

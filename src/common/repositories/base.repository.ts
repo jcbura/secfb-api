@@ -1,154 +1,90 @@
 import { PrismaService } from '@/modules/prisma/prisma.service';
-import { Logger, NotFoundException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+import { Prisma } from '@prisma/client';
 
-export type PrismaTransaction = Parameters<
-  Parameters<PrismaClient['$transaction']>[0]
->[0];
-export type PrismaClientOrTransaction = PrismaClient | PrismaTransaction;
-export interface BaseRepositoryInterface<T, CreateInput, UpdateInput> {
-  create(data: CreateInput, client?: PrismaClientOrTransaction): Promise<T>;
-  findAll(client?: PrismaClientOrTransaction): Promise<T[]>;
-  findById(id: number, client?: PrismaClientOrTransaction): Promise<T | null>;
-  findByIdOrThrow(id: number, client?: PrismaClientOrTransaction): Promise<T>;
-  update(
-    id: number,
-    data: UpdateInput,
-    client?: PrismaClientOrTransaction,
-  ): Promise<T>;
-  delete(id: number, client?: PrismaClientOrTransaction): Promise<T>;
-}
-
-export abstract class BaseRepository<T, CreateInput, UpdateInput>
-  implements BaseRepositoryInterface<T, CreateInput, UpdateInput>
-{
-  protected readonly logger: Logger;
-
+export abstract class BaseRepository<
+  MainModel,
+  FindFirstArgs,
+  FindFirstOrThrowArgs,
+  FindUniqueArgs,
+  FindUniqueOrThrowArgs,
+  CreateArgs,
+  UpdateArgs,
+  UpsertArgs,
+  DeleteArgs,
+  FindManyArgs,
+  CreateManyArgs,
+  UpdateManyArgs,
+  DeleteManyArgs,
+  CountArgs,
+  AggregateArgs,
+  GroupByArgs,
+> {
   constructor(
-    protected readonly prismaService: PrismaService,
-    protected modelName: string,
-  ) {
-    this.logger = new Logger(`${modelName}Repository`);
+    protected readonly txHost: TransactionHost<
+      TransactionalAdapterPrisma<PrismaService>
+    >,
+    protected readonly modelName: Prisma.ModelName,
+  ) {}
+
+  async findFirst(args: FindFirstArgs): Promise<MainModel | null> {
+    return await this.txHost.tx[this.modelName].findFirst(args);
   }
 
-  async create(
-    data: CreateInput,
-    client?: PrismaClientOrTransaction,
-  ): Promise<T> {
-    try {
-      const model = this.getModel(client);
-      const entity = await model.create({ data });
-
-      this.logger.log(`${this.modelName} created with ID ${entity.id}`);
-      return entity;
-    } catch (error) {
-      this.logger.error(
-        `Database error creating ${this.modelName.toLowerCase()}`,
-        error.stack,
-      );
-      throw error;
-    }
+  async findFirstOrThrow(args: FindFirstOrThrowArgs): Promise<MainModel> {
+    return await this.txHost.tx[this.modelName].findFirstOrThrow(args);
   }
 
-  async findAll(client?: PrismaClientOrTransaction): Promise<T[]> {
-    try {
-      const model = this.getModel(client);
-      const entities = await model.findMany({
-        orderBy: { createdAt: 'asc' },
-      });
-
-      return entities;
-    } catch (error) {
-      this.logger.error(
-        `Database error fetching all ${this.modelName.toLowerCase()}s`,
-        error.stack,
-      );
-      throw error;
-    }
+  async findUnique(args: FindUniqueArgs): Promise<MainModel | null> {
+    return await this.txHost.tx[this.modelName].findUnique(args);
   }
 
-  async findById(
-    id: number,
-    client?: PrismaClientOrTransaction,
-  ): Promise<T | null> {
-    try {
-      const model = this.getModel(client);
-      const entity = await model.findUnique({
-        where: { id },
-      });
-
-      return entity;
-    } catch (error) {
-      this.logger.error(
-        `Database error fetching ${this.modelName.toLowerCase()} by ID ${id}`,
-        error.stack,
-      );
-      throw error;
-    }
+  async findUniqueOrThrow(args: FindUniqueOrThrowArgs): Promise<MainModel> {
+    return await this.txHost.tx[this.modelName].findUniqueOrThrow(args);
   }
 
-  async findByIdOrThrow(
-    id: number,
-    client?: PrismaClientOrTransaction,
-  ): Promise<T> {
-    const entity = await this.findById(id, client);
-    if (!entity) {
-      this.logger.warn(
-        `Lookup failed: ${this.modelName.toLowerCase()} with ID ${id} not found`,
-      );
-      throw new NotFoundException(`${this.modelName} with ID ${id} not found`);
-    }
-    return entity;
+  async create(args: CreateArgs): Promise<MainModel> {
+    return await this.txHost.tx[this.modelName].create(args);
   }
 
-  async update(
-    id: number,
-    data: UpdateInput,
-    client?: PrismaClientOrTransaction,
-  ): Promise<T> {
-    try {
-      await this.findByIdOrThrow(id, client);
-
-      const model = this.getModel(client);
-      const entity = await model.update({
-        where: { id },
-        data,
-      });
-
-      this.logger.log(`${this.modelName} updated with ID ${entity.id}`);
-      return entity;
-    } catch (error) {
-      this.logger.error(
-        `Database error updating ${this.modelName.toLowerCase()} with ID ${id}`,
-        error.stack,
-      );
-      throw error;
-    }
+  async update(args: UpdateArgs): Promise<MainModel> {
+    return await this.txHost.tx[this.modelName].update(args);
   }
 
-  async delete(id: number, client?: PrismaClientOrTransaction): Promise<T> {
-    try {
-      await this.findByIdOrThrow(id, client);
-
-      const model = this.getModel(client);
-      const entity = await model.delete({
-        where: { id },
-      });
-
-      this.logger.log(`${this.modelName} deleted with ID ${entity.id}`);
-      return entity;
-    } catch (error) {
-      this.logger.error(
-        `Database error deleting ${this.modelName.toLowerCase()} with ID ${id}`,
-        error.stack,
-      );
-      throw error;
-    }
+  async upsert(args: UpsertArgs): Promise<MainModel> {
+    return await this.txHost.tx[this.modelName].upsert(args);
   }
 
-  protected getModel(client?: PrismaClientOrTransaction) {
-    const prismaClient = client || this.prismaService;
-    const modelName = this.modelName.toLowerCase();
-    return prismaClient[modelName];
+  async delete(args: DeleteArgs): Promise<MainModel> {
+    return await this.txHost.tx[this.modelName].delete(args);
+  }
+
+  async findMany(args: FindManyArgs): Promise<MainModel[]> {
+    return await this.txHost.tx[this.modelName].findMany(args);
+  }
+
+  async createMany(args: CreateManyArgs): Promise<Prisma.BatchPayload> {
+    return await this.txHost.tx[this.modelName].createMany(args);
+  }
+
+  async updateMany(args: UpdateManyArgs): Promise<Prisma.BatchPayload> {
+    return await this.txHost.tx[this.modelName].updateMany(args);
+  }
+
+  async deleteMany(args: DeleteManyArgs): Promise<Prisma.BatchPayload> {
+    return await this.txHost.tx[this.modelName].deleteMany(args);
+  }
+
+  async count(args: CountArgs): Promise<number> {
+    return await this.txHost.tx[this.modelName].count(args);
+  }
+
+  async aggregate(args: AggregateArgs): Promise<any> {
+    return await this.txHost.tx[this.modelName].aggregate(args);
+  }
+
+  async groupBy(args: GroupByArgs): Promise<any> {
+    return await this.txHost.tx[this.modelName].groupBy(args);
   }
 }

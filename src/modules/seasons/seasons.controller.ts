@@ -1,11 +1,5 @@
-import { Auth } from '@/common/decorators';
-import {
-  BaseArraySeasonResponseDto,
-  BaseSeasonResponseDto,
-  CreateSeasonRequestDto,
-  SeasonResponseDto,
-  UpdateSeasonRequestDto,
-} from '@/modules/seasons/dtos';
+import { Auth, Identifier } from '@/common/decorators';
+import { CreateSeasonDto, UpdateSeasonDto } from '@/modules/seasons/dtos';
 import { SeasonsService } from '@/modules/seasons/seasons.service';
 import {
   Body,
@@ -13,17 +7,10 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
 } from '@nestjs/common';
-import {
-  ApiBody,
-  ApiOperation,
-  ApiParam,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Seasons')
 @Controller('seasons')
@@ -31,75 +18,49 @@ export class SeasonsController {
   constructor(private readonly seasonsService: SeasonsService) {}
 
   @ApiOperation({ summary: 'Create season' })
-  @ApiBody({ type: CreateSeasonRequestDto })
-  @ApiResponse({
-    status: 201,
-    type: BaseSeasonResponseDto,
-  })
   @Auth()
   @Post()
-  async create(
-    @Body() dto: CreateSeasonRequestDto,
-  ): Promise<SeasonResponseDto> {
+  async create(@Body() dto: CreateSeasonDto) {
     return this.seasonsService.create(dto);
   }
 
-  @ApiOperation({ summary: 'Find all seasons' })
-  @ApiResponse({
-    status: 200,
-    type: BaseArraySeasonResponseDto,
-  })
+  @ApiOperation({ summary: 'Find seasons' })
   @Get()
-  async findAll(): Promise<SeasonResponseDto[]> {
-    return this.seasonsService.findAll();
+  async findMany() {
+    return this.seasonsService.findMany();
   }
 
   @ApiOperation({ summary: 'Find season' })
-  @ApiParam({
-    name: 'identifier',
-    type: String,
-    examples: {
-      id: { value: '1', description: 'Find by ID' },
-      slug: { value: '2025-2026', description: 'Find by slug' },
-    },
-  })
-  @ApiResponse({
-    status: 200,
-    type: BaseSeasonResponseDto,
-  })
+  @Identifier('2025-2026')
   @Get(':identifier')
-  async find(
-    @Param('identifier') identifier: string,
-  ): Promise<SeasonResponseDto> {
-    return this.seasonsService.findByIdentifier(identifier);
+  async find(@Param('identifier') identifier: string) {
+    return this.seasonsService.find(identifier);
   }
 
-  @ApiOperation({
-    summary: 'Update season',
-  })
-  @ApiBody({ type: UpdateSeasonRequestDto })
-  @ApiParam({ name: 'id', type: Number })
-  @ApiResponse({
-    status: 200,
-    type: BaseSeasonResponseDto,
-  })
+  @ApiOperation({ summary: 'Update season' })
+  @Identifier('2025-2026')
   @Auth()
-  @Patch(':id')
+  @Patch(':identifier')
   async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateSeasonRequestDto,
-  ): Promise<SeasonResponseDto> {
-    return this.seasonsService.update(id, dto);
+    @Param('identifier') identifier: string,
+    @Body() dto: UpdateSeasonDto,
+  ) {
+    return this.seasonsService.update(identifier, dto);
   }
 
   @ApiOperation({ summary: 'Delete season' })
-  @ApiParam({ name: 'id', type: Number })
-  @ApiResponse({
-    status: 204,
-  })
+  @Identifier('2025-2026')
   @Auth()
-  @Delete(':id')
-  async delete(@Param('id', ParseIntPipe) id: number): Promise<void> {
-    return this.seasonsService.delete(id);
+  @Delete(':identifier')
+  async delete(@Param('identifier') identifier: string) {
+    return this.seasonsService.delete(identifier);
+  }
+
+  @ApiOperation({ summary: 'Set current season' })
+  @Identifier('2025-2026')
+  @Auth()
+  @Patch(':identifier/current')
+  async setCurrent(@Param('identifier') identifier: string) {
+    return this.seasonsService.setCurrent(identifier);
   }
 }

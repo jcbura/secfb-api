@@ -1,7 +1,11 @@
-import { withBaseResponse } from '@/common/utils';
 import { environmentVariables } from '@/config';
 import { AuthService } from '@/modules/auth/auth.service';
-import { LoginRequestDto, LoginResponseDto } from '@/modules/auth/dtos';
+import {
+  BaseLoginResponseDto,
+  BaseRefreshResponseDto,
+  LoginRequestDto,
+  LoginResponseDto,
+} from '@/modules/auth/dtos';
 import { JwtRefreshGuard, LocalAuthGuard } from '@/modules/auth/guards';
 import { AuthenticatedRequest } from '@/modules/auth/interfaces';
 import { Controller, Post, Request, Res, UseGuards } from '@nestjs/common';
@@ -18,9 +22,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Logged in as admin successfully',
-    type: class SuccessfulLoginResponseDto extends withBaseResponse(
-      LoginResponseDto,
-    ) {},
+    type: BaseLoginResponseDto,
   })
   @UseGuards(LocalAuthGuard)
   @Post('login')
@@ -40,9 +42,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Refreshed access token successfully',
-    type: class SuccessRefreshResponseDto extends withBaseResponse(
-      LoginResponseDto,
-    ) {},
+    type: BaseRefreshResponseDto,
   })
   @UseGuards(JwtRefreshGuard)
   @Post('refresh')

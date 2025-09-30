@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { GameStatus, GameType } from '@prisma/client';
+import { GameType } from '@prisma/client';
 import {
   IsBoolean,
   IsDateString,
@@ -12,33 +12,27 @@ import {
   Min,
 } from 'class-validator';
 
-export class CreateGameRequestDto {
+export class CreateGameDto {
   @ApiPropertyOptional({ type: String, example: 'Iron Bowl' })
   @IsString()
   @IsOptional()
+  @IsNotEmpty()
   name?: string;
 
   @ApiProperty({ type: String, example: '2025-11-29T00:00' })
   @IsDateString()
-  @IsNotEmpty()
   date: string;
 
   @ApiProperty({ type: Boolean })
   @IsBoolean()
   isTimeTBD: boolean;
 
-  @ApiPropertyOptional({ type: Number, minimum: 0, maximum: 16 })
+  @ApiPropertyOptional({ type: Number, minimum: 0, maximum: 16, example: 14 })
   @IsNumber()
   @Min(0)
   @Max(16)
   @IsOptional()
   weekNumber?: number;
-
-  @ApiPropertyOptional({ type: Number, minimum: 0 })
-  @IsNumber()
-  @Min(0)
-  @IsOptional()
-  attendance?: number;
 
   @ApiProperty({ enum: GameType })
   @IsEnum(GameType)
@@ -48,23 +42,19 @@ export class CreateGameRequestDto {
   @IsBoolean()
   isConferenceGame: boolean;
 
-  @ApiProperty({ type: Boolean })
+  @ApiProperty({ type: Boolean, example: false })
   @IsBoolean()
   isNeutralSite: boolean;
 
-  @ApiProperty({ enum: GameStatus })
-  @IsEnum(GameStatus)
-  status: GameStatus;
-
-  @ApiProperty({ type: Boolean })
-  @IsBoolean()
-  endedInOvertime: boolean;
-
-  @ApiPropertyOptional({ type: Number, minimum: 1 })
+  @ApiProperty({ type: Number, minimum: 1 })
   @IsNumber()
   @Min(1)
-  @IsOptional()
-  overtimes?: number;
+  awayId: number;
+
+  @ApiProperty({ type: Number, minimum: 1 })
+  @IsNumber()
+  @Min(1)
+  homeId: number;
 
   @ApiProperty({ type: Number, minimum: 1 })
   @IsNumber()

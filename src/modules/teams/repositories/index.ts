@@ -1,3 +1,3 @@
 export * from './logos.repository';
-export * from './snapshots.repository';
+export * from './performances.repository';
 export * from './teams.repository';
