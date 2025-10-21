@@ -4,7 +4,6 @@ import {
   IsBoolean,
   IsDateString,
   IsEnum,
-  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
@@ -13,10 +12,9 @@ import {
 } from 'class-validator';
 
 export class CreateGameDto {
-  @ApiPropertyOptional({ type: String, example: 'Iron Bowl' })
+  @ApiProperty({ type: String, example: 'Iron Bowl' })
   @IsString()
   @IsOptional()
-  @IsNotEmpty()
   name?: string;
 
   @ApiProperty({ type: String, example: '2025-11-29T00:00' })
@@ -49,20 +47,20 @@ export class CreateGameDto {
   @ApiProperty({ type: Number, minimum: 1 })
   @IsNumber()
   @Min(1)
-  awayId: number;
-
-  @ApiProperty({ type: Number, minimum: 1 })
-  @IsNumber()
-  @Min(1)
-  homeId: number;
-
-  @ApiProperty({ type: Number, minimum: 1 })
-  @IsNumber()
-  @Min(1)
   seasonId: number;
 
   @ApiProperty({ type: Number, minimum: 1 })
   @IsNumber()
   @Min(1)
   stadiumId: number;
+
+  @ApiProperty({ type: Number, minimum: 1 })
+  @IsNumber()
+  @Min(1)
+  awayTeamId: number;
+
+  @ApiProperty({ type: Number, minimum: 1 })
+  @IsNumber()
+  @Min(1)
+  homeTeamId: number;
 }

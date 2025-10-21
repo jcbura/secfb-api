@@ -1,9 +1,14 @@
 import { Auth, Identifier } from '@/common/decorators';
 import {
-  CreatePerformanceDto,
+  BaseArrayTeamResponseDto,
+  BaseLogoResponseDto,
+  BaseTeamResponseDto,
+  BulkCreateTeamDto,
   CreateTeamDto,
+  LogoResponseDto,
+  QueryTeamDto,
+  TeamResponseDto,
   UpdateLogoDto,
-  UpdatePerformanceDto,
   UpdateTeamDto,
 } from '@/modules/teams/dtos';
 import { TeamsService } from '@/modules/teams/teams.service';
@@ -15,8 +20,14 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 
 @ApiTags('Teams')
 @Controller('teams')
@@ -24,109 +35,81 @@ export class TeamsController {
   constructor(private readonly teamsService: TeamsService) {}
 
   @ApiOperation({ summary: 'Create team' })
+  @ApiCreatedResponse({ type: BaseTeamResponseDto })
   @Auth()
   @Post()
-  async create(@Body() dto: CreateTeamDto) {
+  async create(@Body() dto: CreateTeamDto): Promise<TeamResponseDto> {
     return this.teamsService.create(dto);
   }
 
+  @ApiOperation({ summary: 'Bulk create teams' })
+  @ApiCreatedResponse({ type: BaseArrayTeamResponseDto })
+  @Auth()
+  @Post('bulk')
+  async createMany(@Body() dto: BulkCreateTeamDto): Promise<TeamResponseDto[]> {
+    return this.teamsService.createMany(dto);
+  }
+
   @ApiOperation({ summary: 'Find teams' })
+  @ApiOkResponse({ type: BaseArrayTeamResponseDto })
   @Get()
-  async findMany() {
-    return this.teamsService.findMany();
+  async findMany(@Query() query: QueryTeamDto): Promise<TeamResponseDto[]> {
+    return this.teamsService.findMany(query);
   }
 
   @ApiOperation({ summary: 'Find team' })
+  @ApiOkResponse({ type: BaseTeamResponseDto })
   @Identifier('alabama-crimson-tide')
   @Get(':identifier')
-  async find(@Param('identifier') identifier: string) {
+  async find(
+    @Param('identifier') identifier: string,
+  ): Promise<TeamResponseDto> {
     return this.teamsService.find(identifier);
   }
 
   @ApiOperation({ summary: 'Update team' })
+  @ApiOkResponse({ type: BaseTeamResponseDto })
   @Identifier('alabama-crimson-tide')
   @Auth()
   @Patch(':identifier')
   async update(
     @Param('identifier') identifier: string,
     @Body() dto: UpdateTeamDto,
-  ) {
+  ): Promise<TeamResponseDto> {
     return this.teamsService.update(identifier, dto);
   }
 
   @ApiOperation({ summary: 'Delete team' })
+  @ApiOkResponse({ type: BaseTeamResponseDto })
   @Identifier('alabama-crimson-tide')
   @Auth()
   @Delete(':identifier')
-  async delete(@Param('identifier') identifier: string) {
+  async delete(
+    @Param('identifier') identifier: string,
+  ): Promise<TeamResponseDto> {
     return this.teamsService.delete(identifier);
   }
 
   @ApiOperation({ summary: 'Update logo' })
+  @ApiOkResponse({ type: BaseLogoResponseDto })
   @Identifier('alabama-crimson-tide')
   @Auth()
   @Patch(':identifier/logo')
   async updateLogo(
     @Param('identifier') identifier: string,
     @Body() dto: UpdateLogoDto,
-  ) {
+  ): Promise<LogoResponseDto> {
     return this.teamsService.updateLogo(identifier, dto);
   }
 
   @ApiOperation({ summary: 'Delete logo' })
+  @ApiOkResponse({ type: BaseLogoResponseDto })
   @Identifier('alabama-crimson-tide')
   @Auth()
   @Delete(':identifier/logo')
-  async deleteLogo(@Param('identifier') identifier: string) {
+  async deleteLogo(
+    @Param('identifier') identifier: string,
+  ): Promise<LogoResponseDto> {
     return this.teamsService.deleteLogo(identifier);
-  }
-
-  @ApiOperation({ summary: 'Create performance' })
-  @Identifier('alabama-crimson-tide')
-  @Identifier('2025-2026', 'seasonIdentifier')
-  @Auth()
-  @Post(':identifier/performance/:seasonIdentifier')
-  async createPerformance(
-    @Param('identifier') identifier: string,
-    @Param('seasonIdentifier') seasonIdentifier: string,
-    @Body() dto: CreatePerformanceDto,
-  ) {
-    return this.createPerformance(identifier, seasonIdentifier, dto);
-  }
-
-  @ApiOperation({ summary: 'Get performance' })
-  @Identifier('alabama-crimson-tide')
-  @Identifier('2025-2026', 'seasonIdentifier')
-  @Get(':identifier/performance/:seasonIdentifier')
-  async findPerformance(
-    @Param('identifier') identifier: string,
-    @Param('seasonIdentifier') seasonIdentifier: string,
-  ) {
-    return this.findPerformance(identifier, seasonIdentifier);
-  }
-
-  @ApiOperation({ summary: 'Update performance' })
-  @Identifier('alabama-crimson-tide')
-  @Identifier('2025-2026', 'seasonIdentifier')
-  @Auth()
-  @Patch(':identifier/performance/:seasonIdentifier')
-  async updatePerformance(
-    @Param('identifier') identifier: string,
-    @Param('seasonIdentifier') seasonIdentifier: string,
-    @Body() dto: UpdatePerformanceDto,
-  ) {
-    return this.updatePerformance(identifier, seasonIdentifier, dto);
-  }
-
-  @ApiOperation({ summary: 'Delete performance' })
-  @Identifier('alabama-crimson-tide')
-  @Identifier('2025-2026', 'seasonIdentifier')
-  @Auth()
-  @Delete(':identifier/performance/:seasonIdentifier')
-  async deletePerformance(
-    @Param('identifier') identifier: string,
-    @Param('seasonIdentifier') seasonIdentifier: string,
-  ) {
-    return this.teamsService.deletePerformance(identifier, seasonIdentifier);
   }
 }

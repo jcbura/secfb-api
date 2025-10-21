@@ -2,6 +2,7 @@ import { AuthModule } from '@/modules/auth/auth.module';
 import { GamesModule } from '@/modules/games/games.module';
 import { PrismaModule } from '@/modules/prisma/prisma.module';
 import { PrismaService } from '@/modules/prisma/prisma.service';
+import { RankingsModule } from '@/modules/rankings/rankings.module';
 import { SeasonsModule } from '@/modules/seasons/seasons.module';
 import { StadiumsModule } from '@/modules/stadiums/stadiums.module';
 import { TeamsModule } from '@/modules/teams/teams.module';
@@ -48,6 +49,7 @@ import { ClsModule } from 'nestjs-cls';
     SeasonsModule,
     StadiumsModule,
     TeamsModule,
+    RankingsModule,
   ],
   controllers: [],
   providers: [],

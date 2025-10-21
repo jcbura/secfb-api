@@ -4,7 +4,7 @@ A REST API for SEC college football data, built with NestJS and TypeScript.
 
 ## Overview
 
-The SECFB API provides a backend service for managing college football data including teams, games, seasons, and stadiums. This API supports applications that need SEC football information with full CRUD operations.
+The SECFB API provides a backend service for managing college football data including teams, games, seasons, stadiums, and rankings. This API supports applications that need SEC football information with full CRUD operations.
 
 > Replaces the outdated [sec-web-backend](https://github.com/jcbura/sec-web-backend) repository.
 
@@ -12,45 +12,49 @@ The SECFB API provides a backend service for managing college football data incl
 
 ```
 # ===== GAMES =====
-POST     /games
-GET      /games
-GET      /games/:identifier
-PATCH    /games/:identifier
-DELETE   /games/:identifier
-
-PATCH    /games/:identifier/score
-PATCH    /games/:identifier/finalize
+POST    /games
+GET     /games
+POST    /games/bulk
+GET     /games/:identifier
+PATCH   /games/:identifier
+DELETE  /games/:identifier
+POST    /games/:identifier/finalize
+POST    /games/:identifier/unfinalize
 
 # ===== SEASONS =====
-POST     /seasons
-GET      /seasons
-GET      /seasons/:identifier
-PATCH    /seasons/:identifier
-DELETE   /seasons/:identifier
-
+POST    /seasons
+GET     /seasons
+POST    /seasons/bulk
+GET     /seasons/:identifier
+PATCH   /seasons/:identifier
+DELETE  /seasons/:identifier
 PATCH   /seasons/:identifier/current
 
 # ===== STADIUMS =====
-POST     /stadiums
-GET      /stadiums
-GET      /stadiums/:identifier
-PATCH    /stadiums/:identifier
-DELETE   /stadiums/:identifier
+POST    /stadiums
+GET     /stadiums
+POST    /stadiums/bulk
+GET     /stadiums/:identifier
+PATCH   /stadiums/:identifier
+DELETE  /stadiums/:identifier
 
 # ===== TEAMS =====
-POST     /teams
-GET      /teams
-GET      /teams/:identifier
-PATCH    /teams/:identifier
-DELETE   /teams/:identifier
+POST    /teams
+GET     /teams
+POST    /teams/bulk
+GET     /teams/:identifier
+PATCH   /teams/:identifier
+DELETE  /teams/:identifier
+PATCH   /teams/:identifier/logo
+DELETE  /teams/:identifier/logo
 
-PATCH    /teams/:identifier/logo
-DELETE   /teams/:identifier/logo
-
-POST     /teams/:identifier/performance/:seasonIdentifier
-GET      /teams/:identifier/performance/:seasonIdentifier
-PATCH    /teams/:identifier/performance/:seasonIdentifier
-DELETE   /teams/:identifier/performance/:seasonIdentifier
+# ===== RANKINGS =====
+GET     /rankings/conference
+GET     /rankings/ap
+GET     /rankings/cfp
+PATCH   /rankings/conference
+PATCH   /rankings/ap
+PATCH   /rankings/cfp
 ```
 
 ## Features
@@ -62,6 +66,7 @@ DELETE   /teams/:identifier/performance/:seasonIdentifier
 - **Seasons Management**: Multi-year season tracking with current season indicators
 - **Stadiums Management**: Stadium information including capacity, location, and team associations
 - **Teams Management**: Team profiles with logos, conference info, and season stats
+- **Rankings Management**: Conference rank, AP poll, and CFP rankings
 
 ### Technical Features
 
@@ -218,12 +223,12 @@ src/
 │   ├── filters/           # Exception filters
 │   ├── interceptors/      # Response interceptors
 │   ├── prisma/            # Database schema and migrations
-│   ├── repositories/      # Repositories
 │   └── utils/             # Utility functions
 ├── modules/               # Feature modules
 │   ├── auth/              # Auth management
 │   ├── games/             # Games management
 │   ├── prisma/            # Database service
+│   ├── rankings/          # Rankings management
 │   ├── seasons/           # Seasons management
 │   ├── stadiums/          # Stadiums management
 │   └── teams/             # Teams management

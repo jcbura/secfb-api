@@ -1,227 +1,152 @@
 import { isNumericId, parseIdentifier } from '@/common/utils';
-import { SeasonsRepository } from '@/modules/seasons/repositories';
+import { PrismaService } from '@/modules/prisma/prisma.service';
 import {
-  CreatePerformanceDto,
+  adaptLogoToDto,
+  adaptTeamsToDto,
+  adaptTeamToDto,
+  TEAM_INCLUDE,
+  TeamWithRelation,
+} from '@/modules/teams/adapaters';
+import {
+  BulkCreateTeamDto,
   CreateTeamDto,
+  LogoResponseDto,
+  QueryTeamDto,
+  TeamResponseDto,
   UpdateLogoDto,
-  UpdatePerformanceDto,
   UpdateTeamDto,
 } from '@/modules/teams/dtos';
-import {
-  LogosRepository,
-  PerformancesRepository,
-  TeamsRepository,
-} from '@/modules/teams/repositories';
+import { Transactional, TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Logo, Prisma, Team } from '@prisma/client';
 
 @Injectable()
 export class TeamsService {
   constructor(
-    private readonly logosRepository: LogosRepository,
-    private readonly performancesRepository: PerformancesRepository,
-    private readonly seasonsRepository: SeasonsRepository,
-    private readonly teamsRepository: TeamsRepository,
+    private readonly txHost: TransactionHost<
+      TransactionalAdapterPrisma<PrismaService>
+    >,
   ) {}
 
-  async create(dto: CreateTeamDto) {
-    return this.teamsRepository.create({
-      data: {
-        ...dto,
-        slug: this.generateSlug(dto.displayName),
-        ...(dto.logo && { logo: { create: { ...dto.logo } } }),
-      },
+  async create(dto: CreateTeamDto): Promise<TeamResponseDto> {
+    const { logo, ...teamData } = dto;
+
+    const data: Prisma.TeamCreateInput = {
+      ...teamData,
+      slug: this.generateSlug(teamData.displayName),
+      logo: { create: { ...logo, alt: `${teamData.displayName} Logo` } },
+    };
+
+    const team: TeamWithRelation = await this.txHost.tx.team.create({
+      data,
+      include: TEAM_INCLUDE,
     });
+
+    return adaptTeamToDto(team);
   }
 
-  async findMany() {
-    return this.teamsRepository.findMany({});
+  @Transactional()
+  async createMany(dto: BulkCreateTeamDto): Promise<TeamResponseDto[]> {
+    const teamsData = dto.teams.map(team => {
+      const { logo: _logo, ...teamData } = team;
+
+      return {
+        ...teamData,
+        slug: this.generateSlug(teamData.displayName),
+      };
+    });
+
+    const teams: Team[] = await this.txHost.tx.team.createManyAndReturn({
+      data: teamsData,
+    });
+
+    const logosData = dto.teams.map((team, index) => ({
+      ...team.logo,
+      alt: `${team.displayName} Logo`,
+      teamId: teams[index].id,
+    }));
+
+    await this.txHost.tx.logo.createMany({ data: logosData });
+
+    const teamsWithRelations: TeamWithRelation[] =
+      await this.txHost.tx.team.findMany({
+        where: { id: { in: teams.map(team => team.id) } },
+        include: TEAM_INCLUDE,
+      });
+
+    return adaptTeamsToDto(teamsWithRelations);
   }
 
-  async find(identifier: string) {
+  async findMany(query: QueryTeamDto): Promise<TeamResponseDto[]> {
+    const where = query.toWhereInput();
+    const orderBy = query.toOrderByInput();
+    const teams: TeamWithRelation[] = await this.txHost.tx.team.findMany({
+      where,
+      include: TEAM_INCLUDE,
+      orderBy,
+    });
+    return adaptTeamsToDto(teams);
+  }
+
+  async find(identifier: string): Promise<TeamResponseDto> {
     const where = parseIdentifier(identifier);
-    return this.teamsRepository.findUniqueOrThrow({ where });
+    const team: TeamWithRelation = await this.txHost.tx.team.findUniqueOrThrow({
+      where,
+      include: TEAM_INCLUDE,
+    });
+    return adaptTeamToDto(team);
   }
 
-  async update(identifier: string, dto: UpdateTeamDto) {
+  async update(
+    identifier: string,
+    dto: UpdateTeamDto,
+  ): Promise<TeamResponseDto> {
     const where = parseIdentifier(identifier);
     const data: Prisma.TeamUpdateInput = { ...dto };
 
-    if (dto.displayName) data.slug = this.generateSlug(dto.displayName);
+    if (dto.displayName) {
+      data.slug = this.generateSlug(dto.displayName);
+      data.logo = { update: { alt: `${dto.displayName} Logo` } };
+    }
 
-    return this.teamsRepository.update({ where, data });
+    const team: TeamWithRelation = await this.txHost.tx.team.update({
+      where,
+      data,
+      include: TEAM_INCLUDE,
+    });
+    return adaptTeamToDto(team);
   }
 
-  async delete(identifier: string) {
+  async delete(identifier: string): Promise<TeamResponseDto> {
     const where = parseIdentifier(identifier);
-    return this.teamsRepository.delete({ where });
-  }
-
-  async updateLogo(identifier: string, dto: UpdateLogoDto) {
-    let teamId: number;
-
-    if (isNumericId(identifier)) {
-      teamId = parseInt(identifier, 10);
-    } else {
-      const where = parseIdentifier(identifier);
-      const team = await this.teamsRepository.findUniqueOrThrow({
-        where,
-        select: { id: true },
-      });
-      teamId = team.id;
-    }
-
-    return this.logosRepository.update({ where: { teamId }, data: { ...dto } });
-  }
-
-  async deleteLogo(identifier: string) {
-    let teamId: number;
-
-    if (isNumericId(identifier)) {
-      teamId = parseInt(identifier, 10);
-    } else {
-      const where = parseIdentifier(identifier);
-      const team = await this.teamsRepository.findUniqueOrThrow({
-        where,
-        select: { id: true },
-      });
-      teamId = team.id;
-    }
-
-    return this.logosRepository.delete({ where: { teamId } });
-  }
-
-  async createPerformance(
-    identifier: string,
-    seasonIdentifier: string,
-    dto: CreatePerformanceDto,
-  ) {
-    let teamId: number;
-    let seasonId: number;
-
-    if (isNumericId(identifier) && isNumericId(seasonIdentifier)) {
-      teamId = parseInt(identifier, 10);
-      seasonId = parseInt(seasonIdentifier, 10);
-    } else {
-      const teamWhere = parseIdentifier(identifier);
-      const seasonWhere = parseIdentifier(seasonIdentifier);
-
-      const [team, season] = await Promise.all([
-        this.teamsRepository.findUniqueOrThrow({
-          where: teamWhere,
-          select: { id: true },
-        }),
-        this.seasonsRepository.findUniqueOrThrow({
-          where: seasonWhere,
-          select: { id: true },
-        }),
-      ]);
-
-      teamId = team.id;
-      seasonId = season.id;
-    }
-
-    return this.performancesRepository.create({
-      data: { ...dto, teamId, seasonId },
+    const team: TeamWithRelation = await this.txHost.tx.team.delete({
+      where,
+      include: TEAM_INCLUDE,
     });
+    return adaptTeamToDto(team);
   }
 
-  async findPerformance(identifier: string, seasonIdentifier: string) {
-    let teamId: number;
-    let seasonId: number;
-
-    if (isNumericId(identifier) && isNumericId(seasonIdentifier)) {
-      teamId = parseInt(identifier, 10);
-      seasonId = parseInt(seasonIdentifier, 10);
-    } else {
-      const teamWhere = parseIdentifier(identifier);
-      const seasonWhere = parseIdentifier(seasonIdentifier);
-
-      const [team, season] = await Promise.all([
-        this.teamsRepository.findUniqueOrThrow({
-          where: teamWhere,
-          select: { id: true },
-        }),
-        this.seasonsRepository.findUniqueOrThrow({
-          where: seasonWhere,
-          select: { id: true },
-        }),
-      ]);
-
-      teamId = team.id;
-      seasonId = season.id;
-    }
-
-    return this.performancesRepository.findUnique({
-      where: { teamId_seasonId: { teamId, seasonId } },
-    });
-  }
-
-  async updatePerformance(
+  async updateLogo(
     identifier: string,
-    seasonIdentifier: string,
-    dto: UpdatePerformanceDto,
-  ) {
-    let teamId: number;
-    let seasonId: number;
+    dto: UpdateLogoDto,
+  ): Promise<LogoResponseDto> {
+    const teamId = await this.resolveTeamId(identifier);
 
-    if (isNumericId(identifier) && isNumericId(seasonIdentifier)) {
-      teamId = parseInt(identifier, 10);
-      seasonId = parseInt(seasonIdentifier, 10);
-    } else {
-      const teamWhere = parseIdentifier(identifier);
-      const seasonWhere = parseIdentifier(seasonIdentifier);
-
-      const [team, season] = await Promise.all([
-        this.teamsRepository.findUniqueOrThrow({
-          where: teamWhere,
-          select: { id: true },
-        }),
-        this.seasonsRepository.findUniqueOrThrow({
-          where: seasonWhere,
-          select: { id: true },
-        }),
-      ]);
-
-      teamId = team.id;
-      seasonId = season.id;
-    }
-
-    return this.performancesRepository.update({
-      where: { teamId_seasonId: { teamId, seasonId } },
+    const logo: Logo = await this.txHost.tx.logo.update({
+      where: { teamId },
       data: { ...dto },
     });
+    return adaptLogoToDto(logo);
   }
 
-  async deletePerformance(identifier: string, seasonIdentifier: string) {
-    let teamId: number;
-    let seasonId: number;
+  async deleteLogo(identifier: string): Promise<LogoResponseDto> {
+    const teamId = await this.resolveTeamId(identifier);
 
-    if (isNumericId(identifier) && isNumericId(seasonIdentifier)) {
-      teamId = parseInt(identifier, 10);
-      seasonId = parseInt(seasonIdentifier, 10);
-    } else {
-      const teamWhere = parseIdentifier(identifier);
-      const seasonWhere = parseIdentifier(seasonIdentifier);
-
-      const [team, season] = await Promise.all([
-        this.teamsRepository.findUniqueOrThrow({
-          where: teamWhere,
-          select: { id: true },
-        }),
-        this.seasonsRepository.findUniqueOrThrow({
-          where: seasonWhere,
-          select: { id: true },
-        }),
-      ]);
-
-      teamId = team.id;
-      seasonId = season.id;
-    }
-
-    return this.performancesRepository.delete({
-      where: { teamId_seasonId: { teamId, seasonId } },
+    const logo: Logo = await this.txHost.tx.logo.delete({
+      where: { teamId },
     });
+    return adaptLogoToDto(logo);
   }
 
   private generateSlug(displayName: string): string {
@@ -231,5 +156,18 @@ export class TeamsService {
       .replace(/[^\w\s-]/g, '')
       .replace(/[-\s]+/g, '-')
       .replace(/^-+|-+$/g, '');
+  }
+
+  private async resolveTeamId(identifier: string): Promise<number> {
+    if (isNumericId(identifier)) {
+      return parseInt(identifier, 10);
+    }
+
+    const where = parseIdentifier(identifier);
+    const team = await this.txHost.tx.team.findUniqueOrThrow({
+      where,
+      select: { id: true },
+    });
+    return team.id;
   }
 }

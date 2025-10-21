@@ -1,46 +1,51 @@
 import { parseIdentifier } from '@/common/utils';
 import {
+  adaptGamesToDto,
+  adaptGameToDto,
+  GAME_INCLUDE,
+} from '@/modules/games/adapters';
+import {
+  BulkCreateGamesDto,
   CreateGameDto,
   FinalizeGameDto,
+  GameResponseDto,
+  QueryGameDto,
   UpdateGameDto,
-  UpdateScoreDto,
 } from '@/modules/games/dtos';
-import {
-  GamesRepository,
-  ParticipantsRepository,
-} from '@/modules/games/repositories';
-import {
-  PerformancesRepository,
-  TeamsRepository,
-} from '@/modules/teams/repositories';
-import { Transactional } from '@nestjs-cls/transactional';
+import { PrismaService } from '@/modules/prisma/prisma.service';
+import { Transactional, TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { GameStatus, Prisma } from '@prisma/client';
+import {
+  GameStatus,
+  ParticipantRole,
+  Prisma,
+  StreakType,
+} from '@prisma/client';
 
 @Injectable()
 export class GamesService {
   constructor(
-    private readonly gamesRepository: GamesRepository,
-    private readonly participantsRepository: ParticipantsRepository,
-    private readonly performancesRepository: PerformancesRepository,
-    private readonly teamsRepository: TeamsRepository,
+    private readonly txHost: TransactionHost<
+      TransactionalAdapterPrisma<PrismaService>
+    >,
   ) {}
 
-  async create(dto: CreateGameDto) {
-    const { awayId, homeId, ...gameDate } = dto;
+  async create(dto: CreateGameDto): Promise<GameResponseDto> {
+    const { awayTeamId, homeTeamId, ...gameData } = dto;
 
-    const awayTeam = await this.teamsRepository.findUniqueOrThrow({
-      where: { id: awayId },
+    const awayTeam = await this.txHost.tx.team.findUniqueOrThrow({
+      where: { id: awayTeamId },
       select: { abbreviation: true },
     });
-    const homeTeam = await this.teamsRepository.findUniqueOrThrow({
-      where: { id: homeId },
+    const homeTeam = await this.txHost.tx.team.findUniqueOrThrow({
+      where: { id: homeTeamId },
       select: { abbreviation: true },
     });
 
-    return this.gamesRepository.create({
+    const game = await this.txHost.tx.game.create({
       data: {
-        ...gameDate,
+        ...gameData,
         slug: this.generateSlug(
           dto.date,
           awayTeam.abbreviation,
@@ -49,47 +54,123 @@ export class GamesService {
         date: new Date(dto.date),
         gameParticipants: {
           create: [
-            { teamId: dto.awayId, isHomeTeam: false },
-            { teamId: dto.homeId, isHomeTeam: true },
+            { teamId: awayTeamId, role: ParticipantRole.AWAY },
+            { teamId: homeTeamId, role: ParticipantRole.HOME },
           ],
         },
       },
+      include: GAME_INCLUDE,
     });
-  }
 
-  async findMany() {
-    return this.gamesRepository.findMany({});
-  }
-
-  async find(identifier: string) {
-    const where = parseIdentifier(identifier);
-    return this.gamesRepository.findUniqueOrThrow({ where });
+    return adaptGameToDto(game);
   }
 
   @Transactional()
-  async update(identifier: string, dto: UpdateGameDto) {
+  async createMany(dto: BulkCreateGamesDto): Promise<GameResponseDto[]> {
+    const createdGames: GameResponseDto[] = [];
+
+    for (const gameDto of dto.games) {
+      const {
+        status,
+        awayScore,
+        homeScore,
+        endedInOvertime,
+        overtimes,
+        ...createGameData
+      } = gameDto;
+
+      const createdGame = await this.create(createGameData);
+
+      if (status === GameStatus.FINAL) {
+        if (awayScore === undefined || homeScore === undefined) {
+          throw new BadRequestException(
+            `Game ${createdGame.slug} marked as FINAL but missing scores`,
+          );
+        }
+
+        const finalizedGame = await this.finalizeGame(createdGame.slug, {
+          awayScore,
+          homeScore,
+          endedInOvertime: endedInOvertime ?? false,
+          overtimes: overtimes ?? null,
+        });
+
+        createdGames.push(finalizedGame);
+      } else {
+        createdGames.push(createdGame);
+      }
+    }
+
+    return createdGames;
+  }
+
+  async findMany(query: QueryGameDto) {
+    const where = query.toWhereInput();
+    const orderBy = query.toOrderByInput();
+    const games = await this.txHost.tx.game.findMany({
+      where,
+      include: GAME_INCLUDE,
+      orderBy,
+    });
+    return adaptGamesToDto(games);
+  }
+
+  async find(identifier: string): Promise<GameResponseDto> {
     const where = parseIdentifier(identifier);
-    const { awayId, homeId, ...gameData } = dto;
+    const game = await this.txHost.tx.game.findUniqueOrThrow({
+      where,
+      include: GAME_INCLUDE,
+    });
+    return adaptGameToDto(game);
+  }
+
+  @Transactional()
+  async update(
+    identifier: string,
+    dto: UpdateGameDto,
+  ): Promise<GameResponseDto> {
+    const where = parseIdentifier(identifier);
+    const { awayTeamId, homeTeamId, ...gameData } = dto;
     const data: Prisma.GameUpdateInput = { ...gameData };
 
-    if (dto.date) data.date = new Date(dto.date);
+    if (dto.date) {
+      data.date = new Date(dto.date);
+    }
 
-    if (dto.date || awayId || homeId) {
-      const existingGame =
-        await this.gamesRepository.findWithParticipants(where);
+    const existingGame = await this.txHost.tx.game.findUniqueOrThrow({
+      where,
+      select: {
+        id: true,
+        status: true,
+        date: true,
+        gameParticipants: {
+          select: {
+            teamId: true,
+            role: true,
+          },
+        },
+      },
+    });
 
-      const finalAwayId =
-        awayId ?? existingGame.gameParticipants.find(p => !p.isHomeTeam).teamId;
-      const finalHomeId =
-        homeId ?? existingGame.gameParticipants.find(p => p.isHomeTeam).teamId;
+    if (existingGame.status === GameStatus.FINAL) {
+      throw new BadRequestException('Cannot update a finalized game');
+    }
+
+    if (dto.date || awayTeamId || homeTeamId) {
+      const finalAwayTeamId =
+        awayTeamId ??
+        existingGame.gameParticipants.find(p => p.role === 'AWAY')?.teamId;
+      const finalHomeTeamId =
+        homeTeamId ??
+        existingGame.gameParticipants.find(p => p.role === 'HOME')?.teamId;
 
       const [awayTeam, homeTeam] = await Promise.all([
-        this.teamsRepository.findUniqueOrThrow({
-          where: { id: finalAwayId },
+        this.txHost.tx.team.findUniqueOrThrow({
+          where: { id: finalAwayTeamId },
           select: { abbreviation: true },
         }),
-        this.teamsRepository.findUniqueOrThrow({
-          where: { id: finalHomeId },
+        this.txHost.tx.team.findUniqueOrThrow({
+          where: { id: finalHomeTeamId },
           select: { abbreviation: true },
         }),
       ]);
@@ -100,97 +181,97 @@ export class GamesService {
         homeTeam.abbreviation,
       );
 
-      const updatedGame = await this.gamesRepository.update({ where, data });
+      await this.txHost.tx.game.update({ where, data });
 
-      if (awayId) {
-        await this.participantsRepository.updateMany({
-          where: { gameId: existingGame.id, isHomeTeam: false },
-          data: { teamId: awayId },
+      if (awayTeamId) {
+        await this.txHost.tx.gameParticipant.updateMany({
+          where: {
+            gameId: existingGame.id,
+            role: ParticipantRole.AWAY,
+          },
+          data: { teamId: awayTeamId },
         });
       }
 
-      if (homeId) {
-        await this.participantsRepository.updateMany({
-          where: { gameId: existingGame.id, isHomeTeam: true },
-          data: { teamId: homeId },
+      if (homeTeamId) {
+        await this.txHost.tx.gameParticipant.updateMany({
+          where: {
+            gameId: existingGame.id,
+            role: ParticipantRole.HOME,
+          },
+          data: { teamId: homeTeamId },
         });
       }
 
-      return updatedGame;
-    }
-
-    return this.gamesRepository.update({ where, data });
-  }
-
-  async delete(identifier: string) {
-    const where = parseIdentifier(identifier);
-    return this.gamesRepository.delete({ where });
-  }
-
-  @Transactional()
-  async updateScore(identifier: string, dto: UpdateScoreDto) {
-    const where = parseIdentifier(identifier);
-    const game = await this.gamesRepository.findWithParticipants(where);
-
-    if (dto.awayScore != null) {
-      await this.participantsRepository.updateMany({
-        where: { gameId: game.id, isHomeTeam: false },
-        data: { score: dto.awayScore },
+      const updatedGame = await this.txHost.tx.game.findUniqueOrThrow({
+        where,
+        include: GAME_INCLUDE,
       });
+
+      return adaptGameToDto(updatedGame);
     }
 
-    if (dto.homeScore != null) {
-      await this.participantsRepository.updateMany({
-        where: { gameId: game.id, isHomeTeam: true },
-        data: { score: dto.homeScore },
-      });
-    }
+    await this.txHost.tx.game.update({ where, data });
 
-    return this.gamesRepository.update({
+    const updatedGame = await this.txHost.tx.game.findUniqueOrThrow({
       where,
-      data: { status: GameStatus.IN_PROGRESS },
+      include: GAME_INCLUDE,
     });
+
+    return adaptGameToDto(updatedGame);
+  }
+
+  async delete(identifier: string): Promise<GameResponseDto> {
+    const where = parseIdentifier(identifier);
+    const game = await this.txHost.tx.game.delete({
+      where,
+      include: GAME_INCLUDE,
+    });
+    return adaptGameToDto(game);
   }
 
   @Transactional()
   async finalizeGame(identifier: string, dto: FinalizeGameDto) {
     const where = parseIdentifier(identifier);
-    const game = await this.gamesRepository.findWithParticipants(where);
 
-    let awayScore = dto.awayScore;
-    let homeScore = dto.homeScore;
-
-    if (awayScore == null || homeScore == null) {
-      const participants = await this.participantsRepository.findMany({
-        where: { gameId: game.id },
-        select: { isHomeTeam: true, score: true },
-      });
-
-      if (awayScore == null)
-        awayScore = participants.find(p => !p.isHomeTeam).score;
-
-      if (homeScore == null)
-        homeScore = participants.find(p => p.isHomeTeam).score;
-    }
-
-    if (awayScore == null || homeScore == null) {
-      throw new BadRequestException(
-        'Both scores must be set before finalizing game',
-      );
-    }
-
-    await this.participantsRepository.updateMany({
-      where: { gameId: game.id, isHomeTeam: false },
-      data: { score: awayScore, isWinner: awayScore > homeScore },
-    });
-
-    await this.participantsRepository.updateMany({
-      where: { gameId: game.id, isHomeTeam: true },
-      data: { score: homeScore, isWinner: homeScore > awayScore },
-    });
-
-    await this.gamesRepository.update({
+    const game = await this.txHost.tx.game.findUniqueOrThrow({
       where,
+      select: {
+        id: true,
+        status: true,
+        isConferenceGame: true,
+        isNeutralSite: true,
+        seasonId: true,
+        gameParticipants: {
+          select: {
+            id: true,
+            teamId: true,
+            role: true,
+            score: true,
+            isWinner: true,
+          },
+        },
+      },
+    });
+
+    const awayParticipant = game.gameParticipants.find(
+      participant => participant.role === ParticipantRole.AWAY,
+    );
+    const homeParticipant = game.gameParticipants.find(
+      participant => participant.role === ParticipantRole.HOME,
+    );
+
+    const isAlreadyFinalized = game.status === GameStatus.FINAL;
+    const newHomeWon = dto.homeScore > dto.awayScore;
+    const oldHomeWon = homeParticipant.isWinner === true;
+    const isDifferentWinner = isAlreadyFinalized && newHomeWon !== oldHomeWon;
+
+    if (isDifferentWinner) {
+      await this.undoGameStats(game);
+    }
+
+    await this.txHost.tx.game.update({
+      where: { id: game.id },
       data: {
         status: GameStatus.FINAL,
         endedInOvertime: dto.endedInOvertime,
@@ -198,96 +279,270 @@ export class GamesService {
       },
     });
 
-    for (const participant of game.gameParticipants) {
-      const isWinner = participant.isHomeTeam
-        ? homeScore > awayScore
-        : awayScore > homeScore;
+    await this.txHost.tx.gameParticipant.update({
+      where: { id: awayParticipant.id },
+      data: {
+        score: dto.awayScore,
+        isWinner: !newHomeWon,
+      },
+    });
 
-      await this.updateTeamSeasonPerformance(
-        participant.teamId,
-        game.seasonId,
-        participant.isHomeTeam,
-        isWinner,
-        game.isConferenceGame,
-        game.isNeutralSite,
-      );
+    await this.txHost.tx.gameParticipant.update({
+      where: { id: homeParticipant.id },
+      data: {
+        score: dto.homeScore,
+        isWinner: newHomeWon,
+      },
+    });
+
+    if (!isAlreadyFinalized || isDifferentWinner) {
+      const updatedGame = await this.txHost.tx.game.findUniqueOrThrow({
+        where: { id: game.id },
+        select: {
+          seasonId: true,
+          isConferenceGame: true,
+          isNeutralSite: true,
+          gameParticipants: {
+            select: {
+              teamId: true,
+              role: true,
+              isWinner: true,
+            },
+          },
+        },
+      });
+
+      await this.applyGameStats(updatedGame);
+
+      await this.recalculateTeamStreak(awayParticipant.teamId, game.seasonId);
+      await this.recalculateTeamStreak(homeParticipant.teamId, game.seasonId);
+    }
+
+    const finalizedGame = await this.txHost.tx.game.findUniqueOrThrow({
+      where,
+      include: GAME_INCLUDE,
+    });
+    return adaptGameToDto(finalizedGame);
+  }
+
+  @Transactional()
+  async unfinalizeGame(identifier: string): Promise<GameResponseDto> {
+    const where = parseIdentifier(identifier);
+
+    const game = await this.txHost.tx.game.findUniqueOrThrow({
+      where,
+      select: {
+        id: true,
+        status: true,
+        isConferenceGame: true,
+        isNeutralSite: true,
+        seasonId: true,
+        gameParticipants: {
+          select: {
+            id: true,
+            teamId: true,
+            role: true,
+            score: true,
+            isWinner: true,
+          },
+        },
+      },
+    });
+
+    if (game.status !== GameStatus.FINAL) {
+      throw new BadRequestException('Game is not finalized');
+    }
+
+    await this.undoGameStats(game);
+
+    await this.txHost.tx.game.update({
+      where: { id: game.id },
+      data: {
+        status: GameStatus.SCHEDULED,
+        endedInOvertime: false,
+        overtimes: null,
+      },
+    });
+
+    await this.txHost.tx.gameParticipant.updateMany({
+      where: { gameId: game.id },
+      data: { score: null, isWinner: null },
+    });
+
+    const awayParticipant = game.gameParticipants.find(
+      participant => participant.role === ParticipantRole.AWAY,
+    );
+    const homeParticipant = game.gameParticipants.find(
+      participant => participant.role === ParticipantRole.HOME,
+    );
+
+    await this.recalculateTeamStreak(awayParticipant.teamId, game.seasonId);
+    await this.recalculateTeamStreak(homeParticipant.teamId, game.seasonId);
+
+    const unfinalizedGame = await this.txHost.tx.game.findUniqueOrThrow({
+      where,
+      include: GAME_INCLUDE,
+    });
+    return adaptGameToDto(unfinalizedGame);
+  }
+
+  private async applyGameStats(game: {
+    seasonId: number;
+    isConferenceGame: boolean;
+    isNeutralSite: boolean;
+    gameParticipants: Array<{
+      teamId: number;
+      role: ParticipantRole;
+      isWinner: boolean;
+    }>;
+  }): Promise<void> {
+    for (const participant of game.gameParticipants) {
+      const isHome = participant.role === ParticipantRole.HOME;
+      const won = participant.isWinner;
+
+      await this.txHost.tx.teamSeasonStat.upsert({
+        where: {
+          teamId_seasonId: {
+            teamId: participant.teamId,
+            seasonId: game.seasonId,
+          },
+        },
+        update: {
+          wins: { increment: won ? 1 : 0 },
+          losses: { increment: won ? 0 : 1 },
+          homeWins: { increment: isHome && !game.isNeutralSite && won ? 1 : 0 },
+          homeLosses: {
+            increment: isHome && !game.isNeutralSite && !won ? 1 : 0,
+          },
+          awayWins: {
+            increment: !isHome && !game.isNeutralSite && won ? 1 : 0,
+          },
+          awayLosses: {
+            increment: !isHome && !game.isNeutralSite && !won ? 1 : 0,
+          },
+          neutralWins: { increment: game.isNeutralSite && won ? 1 : 0 },
+          neutralLosses: { increment: game.isNeutralSite && !won ? 1 : 0 },
+          conferenceWins: { increment: game.isConferenceGame && won ? 1 : 0 },
+          conferenceLosses: {
+            increment: game.isConferenceGame && !won ? 1 : 0,
+          },
+        },
+        create: {
+          teamId: participant.teamId,
+          seasonId: game.seasonId,
+          wins: won ? 1 : 0,
+          losses: won ? 0 : 1,
+          homeWins: isHome && !game.isNeutralSite && won ? 1 : 0,
+          homeLosses: isHome && !game.isNeutralSite && !won ? 1 : 0,
+          awayWins: !isHome && !game.isNeutralSite && won ? 1 : 0,
+          awayLosses: !isHome && !game.isNeutralSite && !won ? 1 : 0,
+          neutralWins: game.isNeutralSite && won ? 1 : 0,
+          neutralLosses: game.isNeutralSite && !won ? 1 : 0,
+          conferenceWins: game.isConferenceGame && won ? 1 : 0,
+          conferenceLosses: game.isConferenceGame && !won ? 1 : 0,
+        },
+      });
     }
   }
 
-  private async updateTeamSeasonPerformance(
+  private async undoGameStats(game: {
+    id: number;
+    seasonId: number;
+    isConferenceGame: boolean;
+    isNeutralSite: boolean;
+    gameParticipants: Array<{
+      teamId: number;
+      role: ParticipantRole;
+      isWinner: boolean;
+    }>;
+  }): Promise<void> {
+    for (const participant of game.gameParticipants) {
+      const isHome = participant.role === ParticipantRole.HOME;
+      const won = participant.isWinner;
+
+      await this.txHost.tx.teamSeasonStat.updateMany({
+        where: {
+          teamId: participant.teamId,
+          seasonId: game.seasonId,
+        },
+        data: {
+          wins: { decrement: won ? 1 : 0 },
+          losses: { decrement: won ? 0 : 1 },
+          homeWins: { decrement: isHome && !game.isNeutralSite && won ? 1 : 0 },
+          homeLosses: {
+            decrement: isHome && !game.isNeutralSite && !won ? 1 : 0,
+          },
+          awayWins: {
+            decrement: !isHome && !game.isNeutralSite && won ? 1 : 0,
+          },
+          awayLosses: {
+            decrement: !isHome && !game.isNeutralSite && !won ? 1 : 0,
+          },
+          neutralWins: { decrement: game.isNeutralSite && won ? 1 : 0 },
+          neutralLosses: { decrement: game.isNeutralSite && !won ? 1 : 0 },
+          conferenceWins: {
+            decrement: game.isConferenceGame && won ? 1 : 0,
+          },
+          conferenceLosses: {
+            decrement: game.isConferenceGame && !won ? 1 : 0,
+          },
+        },
+      });
+    }
+  }
+
+  private async recalculateTeamStreak(
     teamId: number,
     seasonId: number,
-    isHomeTeam: boolean,
-    isWinner: boolean,
-    isConferenceGame: boolean,
-    isNeutralSite: boolean,
-  ) {
-    const { streak, isWinStreak } = await this.calculateStreak(
-      teamId,
-      seasonId,
-      isWinner,
-    );
+  ): Promise<void> {
+    const games = await this.txHost.tx.game.findMany({
+      where: {
+        seasonId,
+        status: GameStatus.FINAL,
+        gameParticipants: {
+          some: { teamId },
+        },
+      },
+      include: {
+        gameParticipants: {
+          where: { teamId },
+          select: { isWinner: true },
+        },
+      },
+      orderBy: { date: 'asc' },
+    });
 
-    await this.performancesRepository.upsert({
-      where: { teamId_seasonId: { teamId, seasonId } },
-      create: {
-        wins: isWinner ? 1 : 0,
-        losses: isWinner ? 0 : 1,
-        conferenceWins: isConferenceGame && isWinner ? 1 : 0,
-        conferenceLosses: isConferenceGame && !isWinner ? 1 : 0,
-        homeWins: isHomeTeam && !isNeutralSite && isWinner ? 1 : 0,
-        homeLosses: isHomeTeam && !isNeutralSite && !isWinner ? 1 : 0,
-        awayWins: !isHomeTeam && !isNeutralSite && isWinner ? 1 : 0,
-        awayLosses: !isHomeTeam && !isNeutralSite && !isWinner ? 1 : 0,
-        neutralWins: isNeutralSite && isWinner ? 1 : 0,
-        neutralLosses: isNeutralSite && !isWinner ? 1 : 0,
-        streak,
-        isWinStreak,
+    let currentStreak = 0;
+    let streakType: StreakType = StreakType.WIN;
+
+    for (const game of games) {
+      const participant = game.gameParticipants[0];
+      const won = participant.isWinner;
+
+      if (currentStreak === 0) {
+        currentStreak = 1;
+        streakType = won ? StreakType.WIN : StreakType.LOSS;
+      } else if (
+        (won && streakType === StreakType.WIN) ||
+        (!won && streakType === StreakType.LOSS)
+      ) {
+        currentStreak++;
+      } else {
+        currentStreak = 1;
+        streakType = won ? StreakType.WIN : StreakType.LOSS;
+      }
+    }
+
+    await this.txHost.tx.teamSeasonStat.updateMany({
+      where: {
         teamId,
         seasonId,
       },
-      update: {
-        wins: { increment: isWinner ? 1 : 0 },
-        losses: { increment: !isWinner ? 1 : 0 },
-        conferenceWins: { increment: isConferenceGame && isWinner ? 1 : 0 },
-        conferenceLosses: { increment: isConferenceGame && !isWinner ? 1 : 0 },
-        homeWins: {
-          increment: isHomeTeam && !isNeutralSite && isWinner ? 1 : 0,
-        },
-        homeLosses: {
-          increment: isHomeTeam && !isNeutralSite && !isWinner ? 1 : 0,
-        },
-        awayWins: {
-          increment: !isHomeTeam && !isNeutralSite && isWinner ? 1 : 0,
-        },
-        awayLosses: {
-          increment: !isHomeTeam && !isNeutralSite && !isWinner ? 1 : 0,
-        },
-        neutralWins: { increment: isNeutralSite && isWinner ? 1 : 0 },
-        neutralLosses: { increment: isNeutralSite && !isWinner ? 1 : 0 },
-        streak,
-        isWinStreak,
+      data: {
+        streak: currentStreak,
+        streakType,
       },
     });
-  }
-
-  private async calculateStreak(
-    teamId: number,
-    seasonId: number,
-    isWinner: boolean,
-  ): Promise<{ streak: number; isWinStreak: boolean }> {
-    const performance = await this.performancesRepository.findUnique({
-      where: { teamId_seasonId: { teamId, seasonId } },
-      select: { streak: true, isWinStreak: true },
-    });
-    if (
-      performance &&
-      performance.streak != null &&
-      performance.isWinStreak === isWinner
-    ) {
-      return { streak: performance.streak + 1, isWinStreak: isWinner };
-    }
-    return { streak: 1, isWinStreak: isWinner };
   }
 
   private generateSlug(

@@ -1,13 +1,16 @@
 import { CreateLogoDto } from '@/modules/teams/dtos';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Conference } from '@prisma/client';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMinSize,
+  IsArray,
   IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
+  Matches,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -23,9 +26,13 @@ export class CreateTeamDto {
   @IsNotEmpty()
   shortDisplayName: string;
 
-  @ApiProperty({ type: String, example: 'ALA' })
+  @ApiProperty({ type: String, example: 'ala' })
   @IsString()
   @IsNotEmpty()
+  @Matches(/^[a-zA-Z]+$/, {
+    message: 'Abbreviation must contain only letters',
+  })
+  @Transform(({ value }) => value.toLowerCase())
   abbreviation: string;
 
   @ApiProperty({ type: String, example: 'Crimson Tide' })
@@ -33,9 +40,8 @@ export class CreateTeamDto {
   @IsNotEmpty()
   mascot: string;
 
-  @ApiPropertyOptional({ enum: Conference, example: Conference.SEC })
+  @ApiProperty({ enum: Conference, example: Conference.SEC })
   @IsEnum(Conference)
-  @IsOptional()
   conference: Conference;
 
   @ApiPropertyOptional({ type: Number, minimum: 1 })
@@ -48,4 +54,13 @@ export class CreateTeamDto {
   @ValidateNested()
   @Type(() => CreateLogoDto)
   logo: CreateLogoDto;
+}
+
+export class BulkCreateTeamDto {
+  @ApiProperty({ type: [CreateTeamDto], minItems: 1 })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateTeamDto)
+  @ArrayMinSize(1)
+  teams: CreateTeamDto[];
 }

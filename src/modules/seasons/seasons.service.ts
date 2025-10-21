@@ -1,34 +1,75 @@
 import { parseIdentifier } from '@/common/utils';
-import { CreateSeasonDto, UpdateSeasonDto } from '@/modules/seasons/dtos';
-import { SeasonsRepository } from '@/modules/seasons/repositories';
+import { PrismaService } from '@/modules/prisma/prisma.service';
+import {
+  adaptSeasonsToDto,
+  adaptSeasonToDto,
+} from '@/modules/seasons/adapters';
+import {
+  BulkCreateSeasonDto,
+  CreateSeasonDto,
+  QuerySeasonDto,
+  SeasonResponseDto,
+  UpdateSeasonDto,
+} from '@/modules/seasons/dtos';
+import { Transactional, TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, Season } from '@prisma/client';
 
 @Injectable()
 export class SeasonsService {
-  constructor(private readonly seasonsRepository: SeasonsRepository) {}
+  constructor(
+    private readonly txHost: TransactionHost<
+      TransactionalAdapterPrisma<PrismaService>
+    >,
+  ) {}
 
-  async create(dto: CreateSeasonDto) {
-    return this.seasonsRepository.create({
-      data: {
-        ...dto,
-        slug: this.generateSlug(dto.startDate, dto.endDate),
-        startDate: new Date(dto.startDate),
-        endDate: new Date(dto.endDate),
-      },
+  async create(dto: CreateSeasonDto): Promise<SeasonResponseDto> {
+    const data: Prisma.SeasonCreateInput = {
+      ...dto,
+      slug: this.generateSlug(dto.startDate, dto.endDate),
+      startDate: new Date(dto.startDate),
+      endDate: new Date(dto.endDate),
+    };
+    const season: Season = await this.txHost.tx.season.create({ data });
+    return adaptSeasonToDto(season);
+  }
+
+  async createMany(dto: BulkCreateSeasonDto): Promise<SeasonResponseDto[]> {
+    const data: Prisma.SeasonCreateManyInput[] = dto.seasons.map(season => ({
+      ...season,
+      slug: this.generateSlug(season.startDate, season.endDate),
+      startDate: new Date(season.startDate),
+      endDate: new Date(season.endDate),
+    }));
+    const seasons: Season[] = await this.txHost.tx.season.createManyAndReturn({
+      data,
     });
+    return adaptSeasonsToDto(seasons);
   }
 
-  async findMany() {
-    return this.seasonsRepository.findMany({});
+  async findMany(query: QuerySeasonDto): Promise<SeasonResponseDto[]> {
+    const where = query.toWhereInput();
+    const orderBy = query.toOrderByInput();
+    const seasons: Season[] = await this.txHost.tx.season.findMany({
+      where,
+      orderBy,
+    });
+    return adaptSeasonsToDto(seasons);
   }
 
-  async find(identifier: string) {
+  async find(identifier: string): Promise<SeasonResponseDto> {
     const where = parseIdentifier(identifier);
-    return this.seasonsRepository.findUniqueOrThrow({ where });
+    const season: Season = await this.txHost.tx.season.findUniqueOrThrow({
+      where,
+    });
+    return adaptSeasonToDto(season);
   }
 
-  async update(identifier: string, dto: UpdateSeasonDto) {
+  async update(
+    identifier: string,
+    dto: UpdateSeasonDto,
+  ): Promise<SeasonResponseDto> {
     const where = parseIdentifier(identifier);
     const data: Prisma.SeasonUpdateInput = { ...dto };
 
@@ -36,7 +77,7 @@ export class SeasonsService {
     if (dto.endDate) data.endDate = new Date(dto.endDate);
 
     if (dto.startDate || dto.endDate) {
-      const existingSeason = await this.seasonsRepository.findUniqueOrThrow({
+      const existingSeason = await this.txHost.tx.season.findUniqueOrThrow({
         where,
         select: { startDate: true, endDate: true },
       });
@@ -47,23 +88,34 @@ export class SeasonsService {
       );
     }
 
-    return this.seasonsRepository.update({ where, data });
+    const season: Season = await this.txHost.tx.season.update({ where, data });
+    return adaptSeasonToDto(season);
   }
 
-  async delete(identifier: string) {
+  async delete(identifier: string): Promise<SeasonResponseDto> {
     const where = parseIdentifier(identifier);
-    return this.seasonsRepository.delete({ where });
+    const season: Season = await this.txHost.tx.season.delete({ where });
+    return adaptSeasonToDto(season);
   }
 
-  async setCurrent(identifier: string) {
+  async findCurrent(): Promise<SeasonResponseDto> {
+    const season: Season = await this.txHost.tx.season.findFirstOrThrow({
+      where: { isCurrentSeason: true },
+    });
+    return adaptSeasonToDto(season);
+  }
+
+  @Transactional()
+  async setCurrent(identifier: string): Promise<SeasonResponseDto> {
     const where = parseIdentifier(identifier);
-    await this.seasonsRepository.updateMany({
+    await this.txHost.tx.season.updateMany({
       data: { isCurrentSeason: false },
     });
-    return this.seasonsRepository.update({
+    const season: Season = await this.txHost.tx.season.update({
       where,
       data: { isCurrentSeason: true },
     });
+    return adaptSeasonToDto(season);
   }
 
   private generateSlug(start: string, end: string): string {

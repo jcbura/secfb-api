@@ -13,17 +13,17 @@ enum Conference {
   BIG_12
   BIG_TEN
   CONFERENCE_USA
-  FBS_INDEPENDENT
+  FBS_INDEPENDENTS
   MID_AMERICAN
   MOUNTAIN_WEST
   PAC_12
   SEC
   SUN_BELT
+  FCS_CONFERENCE
 }
 
 enum GameStatus {
   SCHEDULED
-  IN_PROGRESS
   FINAL
 }
 
@@ -35,6 +35,16 @@ enum GameType {
   QUARTERFINAL
   SEMIFINAL
   NATIONAL_CHAMPIONSHIP
+}
+
+enum ParticipantRole {
+  AWAY
+  HOME
+}
+
+enum StreakType {
+  WIN
+  LOSS
 }
 
 model Game {
@@ -75,8 +85,8 @@ model Season {
   endDate         DateTime @map("end_date")
   isCurrentSeason Boolean  @default(false) @map("is_current_season")
 
-  games                  Game[]
-  teamSeasonPerformances TeamSeasonPerformance[]
+  games           Game[]
+  teamSeasonStats TeamSeasonStat[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -88,18 +98,15 @@ model Stadium {
   id   Int    @id @default(autoincrement())
   slug String @unique
 
-  name     String
-  field    String?
-  nickname String?
-  city     String
-  state    String
-  capacity Int?
+  name  String
+  city  String
+  state String
 
   teams Team[]
   games Game[]
 
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_date")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([name, city, state])
   @@map("stadiums")
@@ -109,18 +116,18 @@ model Team {
   id   Int    @id @default(autoincrement())
   slug String @unique
 
-  displayName      String      @unique @map("display_name")
-  shortDisplayName String      @unique @map("short_display_name")
-  abbreviation     String      @unique
+  displayName      String     @unique @map("display_name")
+  shortDisplayName String     @unique @map("short_display_name")
+  abbreviation     String     @unique
   mascot           String
-  conference       Conference?
+  conference       Conference
 
   stadiumId Int? @map("stadium_id")
 
-  stadium                Stadium?                @relation(fields: [stadiumId], references: [id])
-  logo                   Logo?
-  gameParticipants       GameParticipant[]
-  teamSeasonPerformances TeamSeasonPerformance[]
+  stadium          Stadium?          @relation(fields: [stadiumId], references: [id])
+  logo             Logo?
+  gameParticipants GameParticipant[]
+  teamSeasonStats  TeamSeasonStat[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -131,9 +138,9 @@ model Team {
 model GameParticipant {
   id Int @id @default(autoincrement())
 
-  isHomeTeam Boolean  @map("is_home_team")
-  score      Int?
-  isWinner   Boolean? @map("is_winner")
+  role     ParticipantRole
+  score    Int?
+  isWinner Boolean?        @map("is_winner")
 
   gameId Int @map("game_id")
   teamId Int @map("team_id")
@@ -145,6 +152,7 @@ model GameParticipant {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([gameId, teamId])
+  @@unique([gameId, role])
   @@map("game_participants")
 }
 
@@ -167,34 +175,26 @@ model Logo {
   @@map("logos")
 }
 
-model TeamSeasonPerformance {
+model TeamSeasonStat {
   id Int @id @default(autoincrement())
 
-  wins             Int?
-  losses           Int?
-  conferenceWins   Int? @map("conference_wins")
-  conferenceLosses Int? @map("conference_losses")
-  homeWins         Int? @map("home_wins")
-  homeLosses       Int? @map("home_losses")
-  awayWins         Int? @map("away_wins")
-  awayLosses       Int? @map("away_losses")
-  neutralWins      Int? @map("neutral_wins")
-  neutralLosses    Int? @map("neutral_losses")
+  wins             Int @default(0)
+  losses           Int @default(0)
+  conferenceWins   Int @default(0) @map("conference_wins")
+  conferenceLosses Int @default(0) @map("conference_losses")
+  homeWins         Int @default(0) @map("home_wins")
+  homeLosses       Int @default(0) @map("home_losses")
+  awayWins         Int @default(0) @map("away_wins")
+  awayLosses       Int @default(0) @map("away_losses")
+  neutralWins      Int @default(0) @map("neutral_wins")
+  neutralLosses    Int @default(0) @map("neutral_losses")
 
-  streak      Int?
-  isWinStreak Boolean? @map("is_win_streak")
+  streak     Int        @default(0)
+  streakType StreakType @default(WIN) @map("streak_type")
 
   conferenceRank Int? @map("conference_rank")
-  apPoll         Int? @map("ap_poll")
-  coachesPoll    Int? @map("coaches_poll")
+  apRank         Int? @map("ap_rank")
   cfpRank        Int? @map("cfp_rank")
-
-  totalDefense                Int? @map("total_defense")
-  totalOffense                Int? @map("total_offense")
-  footballPowerIndex          Int? @map("football_power_index")
-  strengthOfRecord            Int? @map("strength_of_record")
-  strengthOfSchedule          Int? @map("strength_of_schedule")
-  remainingStrengthOfSchedule Int? @map("remaining_strength_of_schedule")
 
   teamId   Int @map("team_id")
   seasonId Int @map("season_id")
@@ -206,5 +206,5 @@ model TeamSeasonPerformance {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([teamId, seasonId])
-  @@map("team_season_performances")
+  @@map("team_season_stats")
 }

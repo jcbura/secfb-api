@@ -1,10 +1,11 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
+  ArrayMinSize,
+  IsArray,
   IsNotEmpty,
-  IsNumber,
-  IsOptional,
   IsString,
-  Min,
+  ValidateNested,
 } from 'class-validator';
 
 export class CreateStadiumDto {
@@ -12,18 +13,6 @@ export class CreateStadiumDto {
   @IsString()
   @IsNotEmpty()
   name: string;
-
-  @ApiPropertyOptional({ type: String, example: 'Saban Field' })
-  @IsString()
-  @IsOptional()
-  @IsNotEmpty()
-  field?: string;
-
-  @ApiPropertyOptional({ type: String })
-  @IsString()
-  @IsOptional()
-  @IsNotEmpty()
-  nickname?: string;
 
   @ApiProperty({ type: String, example: 'Tuscaloosa' })
   @IsString()
@@ -34,10 +23,13 @@ export class CreateStadiumDto {
   @IsString()
   @IsNotEmpty()
   state: string;
+}
 
-  @ApiPropertyOptional({ type: Number, minimum: 0, example: 101821 })
-  @IsNumber()
-  @Min(0)
-  @IsOptional()
-  capacity?: number;
+export class BulkCreateStadiumDto {
+  @ApiProperty({ type: [CreateStadiumDto], minItems: 1 })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateStadiumDto)
+  @ArrayMinSize(1)
+  stadiums: CreateStadiumDto[];
 }

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString, IsUrl, Min } from 'class-validator';
+import { IsNumber, IsUrl, Min } from 'class-validator';
 
 export class CreateLogoDto {
   @ApiProperty({ type: String })
@@ -19,9 +19,4 @@ export class CreateLogoDto {
   @IsNumber()
   @Min(1)
   height: number;
-
-  @ApiProperty({ type: String })
-  @IsString()
-  @IsNotEmpty()
-  alt: string;
 }
