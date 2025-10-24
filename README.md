@@ -236,7 +236,3 @@ src/
 ├── config.ts              # Environment configuration
 └── main.ts                # Application entry point
 ```
-
----
-
-**Note**: This project is currently in active development. Some features may be incomplete or subject to change.
