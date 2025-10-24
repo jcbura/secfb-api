@@ -9,7 +9,7 @@ import {
 import { JwtRefreshGuard, LocalAuthGuard } from '@/modules/auth/guards';
 import { AuthenticatedRequest } from '@/modules/auth/interfaces';
 import { Controller, Post, Request, Res, UseGuards } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 
 @ApiTags('Auth')
@@ -19,11 +19,7 @@ export class AuthController {
 
   @ApiOperation({ summary: 'Login as admin' })
   @ApiBody({ type: LoginRequestDto })
-  @ApiResponse({
-    status: 200,
-    description: 'Logged in as admin successfully',
-    type: BaseLoginResponseDto,
-  })
+  @ApiOkResponse({ type: BaseLoginResponseDto })
   @UseGuards(LocalAuthGuard)
   @Post('login')
   async login(
@@ -39,11 +35,7 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Refresh access token' })
-  @ApiResponse({
-    status: 200,
-    description: 'Refreshed access token successfully',
-    type: BaseRefreshResponseDto,
-  })
+  @ApiOkResponse({ type: BaseRefreshResponseDto })
   @UseGuards(JwtRefreshGuard)
   @Post('refresh')
   async refresh(
@@ -58,7 +50,7 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Logout as admin' })
-  @ApiResponse({ status: 200, description: 'Logged out as admin successfully' })
+  @ApiOkResponse({ description: 'Logged out as admin' })
   @Post('logout')
   async logout(@Res({ passthrough: true }) response: Response): Promise<void> {
     this.clearRefreshCookie(response);
