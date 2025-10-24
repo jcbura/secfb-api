@@ -46,6 +46,12 @@ export class QueryGameDto {
   @Type(() => Boolean)
   isConferenceGame?: boolean;
 
+  @ApiPropertyOptional({ type: Boolean })
+  @IsBoolean()
+  @IsOptional()
+  @Type(() => Boolean)
+  isCurrentSeason?: boolean;
+
   @ApiPropertyOptional({ type: String })
   @IsString()
   @IsOptional()
@@ -69,7 +75,9 @@ export class QueryGameDto {
     if (this.weekNumber) where.weekNumber = this.weekNumber;
     if (this.gameType) where.gameType = this.gameType;
     if (this.isConferenceGame) where.isConferenceGame = this.isConferenceGame;
-    if (this.seasonIdentifier) {
+    if (this.isCurrentSeason) {
+      where.season = { isCurrentSeason: true };
+    } else if (this.seasonIdentifier) {
       where.season = parseIdentifier(this.seasonIdentifier);
     }
     if (this.teamIdentifier) {
