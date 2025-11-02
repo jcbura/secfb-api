@@ -3,6 +3,9 @@ import { ApiProperty } from '@nestjs/swagger';
 
 class RankedTeamDto {
   @ApiProperty()
+  id: number;
+
+  @ApiProperty()
   slug: string;
 
   @ApiProperty()
