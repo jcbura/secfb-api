@@ -22,6 +22,12 @@ const ORDER_BY = {
 type OrderBy = (typeof ORDER_BY)[keyof typeof ORDER_BY];
 
 export class QueryGameDto {
+  @ApiPropertyOptional({ type: Boolean })
+  @IsBoolean()
+  @IsOptional()
+  @Type(() => Boolean)
+  isTimeTBD?: boolean;
+
   @ApiPropertyOptional({ enum: GameStatus })
   @IsEnum(GameStatus)
   @IsOptional()
@@ -71,6 +77,7 @@ export class QueryGameDto {
   toWhereInput(): Prisma.GameWhereInput {
     const where: Prisma.GameWhereInput = {};
 
+    if (this.isTimeTBD) where.isTimeTBD = this.isTimeTBD;
     if (this.status) where.status = this.status;
     if (this.weekNumber) where.weekNumber = this.weekNumber;
     if (this.gameType) where.gameType = this.gameType;
