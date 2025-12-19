@@ -19,6 +19,9 @@ export class SeasonResponseDto {
 
   @ApiProperty()
   isCurrentSeason: boolean;
+
+  @ApiProperty()
+  isCfpRankAvailable: boolean;
 }
 
 export class BaseSeasonResponseDto extends withBaseResponse(

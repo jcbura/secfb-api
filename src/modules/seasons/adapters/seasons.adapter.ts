@@ -9,6 +9,7 @@ export const adaptSeasonToDto = (season: Season): SeasonResponseDto => {
     startDate: season.startDate.toISOString(),
     endDate: season.endDate.toISOString(),
     isCurrentSeason: season.isCurrentSeason,
+    isCfpRankAvailable: season.isCfpRankAvailable,
   };
 };
 

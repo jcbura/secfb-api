@@ -80,10 +80,11 @@ model Season {
   id   Int    @id @default(autoincrement())
   slug String @unique
 
-  name            String   @unique
-  startDate       DateTime @map("start_date")
-  endDate         DateTime @map("end_date")
-  isCurrentSeason Boolean  @default(false) @map("is_current_season")
+  name               String   @unique
+  startDate          DateTime @map("start_date")
+  endDate            DateTime @map("end_date")
+  isCurrentSeason    Boolean  @default(false) @map("is_current_season")
+  isCfpRankAvailable Boolean  @default(false) @map("is_cfp_rank_available")
 
   games           Game[]
   teamSeasonStats TeamSeasonStat[]

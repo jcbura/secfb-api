@@ -94,6 +94,11 @@ export class RankingsService {
     await this.clearRankings(currentSeasonId, 'cfpRank');
     await this.applyRankings(currentSeasonId, dto.rankings, 'cfpRank');
 
+    await this.txHost.tx.season.update({
+      where: { id: currentSeasonId },
+      data: { isCfpRankAvailable: true },
+    });
+
     return this.findCfpRankings();
   }
 
