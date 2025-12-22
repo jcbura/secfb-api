@@ -31,11 +31,13 @@ export class TeamsService {
 
   async create(dto: CreateTeamDto): Promise<TeamResponseDto> {
     const { logo, ...teamData } = dto;
+    const displayName = `${teamData.shortDisplayName} ${teamData.mascot}`;
 
     const data: Prisma.TeamCreateInput = {
       ...teamData,
-      slug: this.generateSlug(teamData.displayName),
-      logo: { create: { ...logo, alt: `${teamData.displayName} Logo` } },
+      displayName,
+      slug: this.generateSlug(displayName),
+      logo: { create: { ...logo, alt: `${displayName} Logo` } },
     };
 
     const team: TeamWithRelation = await this.txHost.tx.team.create({
@@ -50,10 +52,12 @@ export class TeamsService {
   async createMany(dto: BulkCreateTeamDto): Promise<TeamResponseDto[]> {
     const teamsData = dto.teams.map(team => {
       const { logo: _logo, ...teamData } = team;
+      const displayName = `${teamData.shortDisplayName} ${teamData.mascot}`;
 
       return {
         ...teamData,
-        slug: this.generateSlug(teamData.displayName),
+        displayName,
+        slug: this.generateSlug(displayName),
       };
     });
 
@@ -61,11 +65,14 @@ export class TeamsService {
       data: teamsData,
     });
 
-    const logosData = dto.teams.map((team, index) => ({
-      ...team.logo,
-      alt: `${team.displayName} Logo`,
-      teamId: teams[index].id,
-    }));
+    const logosData = dto.teams.map((team, index) => {
+      const displayName = `${team.shortDisplayName} ${team.mascot}`;
+      return {
+        ...team.logo,
+        alt: `${displayName} Logo`,
+        teamId: teams[index].id,
+      };
+    });
 
     await this.txHost.tx.logo.createMany({ data: logosData });
 
@@ -105,9 +112,20 @@ export class TeamsService {
     const where = parseIdentifier(identifier);
     const data: Prisma.TeamUpdateInput = { ...dto };
 
-    if (dto.displayName) {
-      data.slug = this.generateSlug(dto.displayName);
-      data.logo = { update: { alt: `${dto.displayName} Logo` } };
+    if (dto.shortDisplayName || dto.mascot) {
+      const existingTeam = await this.txHost.tx.team.findUniqueOrThrow({
+        where,
+        select: { shortDisplayName: true, mascot: true },
+      });
+
+      const shortDisplayName =
+        dto.shortDisplayName ?? existingTeam.shortDisplayName;
+      const mascot = dto.mascot ?? existingTeam.mascot;
+      const displayName = `${shortDisplayName} ${mascot}`;
+
+      data.displayName = displayName;
+      data.slug = this.generateSlug(displayName);
+      data.logo = { update: { alt: `${displayName} Logo` } };
     }
 
     const team: TeamWithRelation = await this.txHost.tx.team.update({

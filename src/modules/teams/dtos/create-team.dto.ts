@@ -16,11 +16,6 @@ import {
 } from 'class-validator';
 
 export class CreateTeamDto {
-  @ApiProperty({ type: String, example: 'Alabama Crimson Tide' })
-  @IsString()
-  @IsNotEmpty()
-  displayName: string;
-
   @ApiProperty({ type: String, example: 'Alabama' })
   @IsString()
   @IsNotEmpty()
