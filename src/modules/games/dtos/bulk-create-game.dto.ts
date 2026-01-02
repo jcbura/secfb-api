@@ -26,10 +26,6 @@ class BulkCreateGameDto {
   @IsDateString()
   date: string;
 
-  @ApiProperty({ type: Boolean })
-  @IsBoolean()
-  isTimeTBD: boolean;
-
   @ApiProperty({ enum: GameStatus, example: GameStatus.SCHEDULED })
   @IsEnum(GameStatus)
   status: GameStatus;

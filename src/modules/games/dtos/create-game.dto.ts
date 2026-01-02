@@ -21,10 +21,6 @@ export class CreateGameDto {
   @IsDateString()
   date: string;
 
-  @ApiProperty({ type: Boolean })
-  @IsBoolean()
-  isTimeTBD: boolean;
-
   @ApiPropertyOptional({ type: Number, minimum: 0, maximum: 16, example: 14 })
   @IsNumber()
   @Min(0)

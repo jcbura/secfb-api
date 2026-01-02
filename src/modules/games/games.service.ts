@@ -51,6 +51,7 @@ export class GamesService {
           awayTeam.abbreviation,
           homeTeam.abbreviation,
         ),
+        isTimeTBD: this.deriveIsTimeTBD(dto.date),
         date: new Date(dto.date),
         gameParticipants: {
           create: [
@@ -443,6 +444,11 @@ export class GamesService {
         },
       });
     }
+  }
+
+  private deriveIsTimeTBD(date: string): boolean {
+    const time = date.split('T')[1];
+    return time.startsWith('00:00');
   }
 
   private async undoGameStats(game: {
