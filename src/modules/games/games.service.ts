@@ -51,8 +51,8 @@ export class GamesService {
           awayTeam.abbreviation,
           homeTeam.abbreviation,
         ),
-        isTimeTBD: this.deriveIsTimeTBD(dto.date),
         date: new Date(dto.date),
+        isTimeTBD: this.deriveIsTimeTBD(dto.date),
         gameParticipants: {
           create: [
             { teamId: awayTeamId, role: ParticipantRole.AWAY },
@@ -136,6 +136,7 @@ export class GamesService {
 
     if (dto.date) {
       data.date = new Date(dto.date);
+      data.isTimeTBD = this.deriveIsTimeTBD(dto.date);
     }
 
     const existingGame = await this.txHost.tx.game.findUniqueOrThrow({
