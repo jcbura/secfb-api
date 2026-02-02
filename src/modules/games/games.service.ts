@@ -71,14 +71,8 @@ export class GamesService {
     const createdGames: GameResponseDto[] = [];
 
     for (const gameDto of dto.games) {
-      const {
-        status,
-        awayScore,
-        homeScore,
-        endedInOvertime,
-        overtimes,
-        ...createGameData
-      } = gameDto;
+      const { status, awayScore, homeScore, overtimes, ...createGameData } =
+        gameDto;
 
       const createdGame = await this.create(createGameData);
 
@@ -92,7 +86,6 @@ export class GamesService {
         const finalizedGame = await this.finalizeGame(createdGame.slug, {
           awayScore,
           homeScore,
-          endedInOvertime: endedInOvertime ?? false,
           overtimes: overtimes ?? null,
         });
 
@@ -276,7 +269,7 @@ export class GamesService {
       where: { id: game.id },
       data: {
         status: GameStatus.FINAL,
-        endedInOvertime: dto.endedInOvertime,
+        endedInOvertime: dto.overtimes > 0,
         overtimes: dto.overtimes,
       },
     });

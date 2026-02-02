@@ -81,11 +81,6 @@ class BulkCreateGameDto {
   @ValidateIf(o => o.status === GameStatus.FINAL)
   homeScore?: number;
 
-  @ApiPropertyOptional({ type: Boolean })
-  @IsBoolean()
-  @IsOptional()
-  endedInOvertime?: boolean;
-
   @ApiPropertyOptional({ type: Number, minimum: 1 })
   @IsNumber()
   @Min(1)

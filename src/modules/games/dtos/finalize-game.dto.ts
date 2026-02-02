@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsNumber, IsOptional, Min } from 'class-validator';
+import { IsNumber, IsOptional, Min } from 'class-validator';
 
 export class FinalizeGameDto {
   @ApiProperty({ type: Number, minimum: 0 })
@@ -11,10 +11,6 @@ export class FinalizeGameDto {
   @IsNumber()
   @Min(0)
   homeScore: number;
-
-  @ApiProperty({ type: Boolean })
-  @IsBoolean()
-  endedInOvertime: boolean;
 
   @ApiPropertyOptional({ type: Number, minimum: 1 })
   @IsNumber()
